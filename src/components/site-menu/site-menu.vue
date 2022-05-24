@@ -84,8 +84,6 @@ export default {
         }
     },
     mounted() {
-
-        console.log(this.$router.currentRoute);
         _.each(this.$router.getRoutes(), route => {
             if (route.name != "Home") {
                 this.routes.push(route)

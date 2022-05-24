@@ -24,9 +24,9 @@
                     <div class="option">
                         <!-- <label>Wireframe</label>÷ -->
                         <span>
-                            <input type="checkbox" id="checkbox-v0" value="true" v-model="wireframe" v-on:change="updateCubeWireframe()">
+                            <input type="checkbox" id="checkbox-v0" v-model="wireframe" v-on:change="toggleWireframe()">
                             <label for="checkbox-v0">
-                                Toggle wireframe
+                                Wireframe
                             </label>
                         </span>
                     </div>
@@ -53,37 +53,43 @@ export default {
     props: [],
     data() {
         return {
-            value: 0,
-            points: [new THREE.Vector3(),new THREE.Vector3()],
             animation: true,
+            wireframe: true,
+            
             cubesize: 1,
-            wireframe: 1,
         }
     },
     methods: {
-
-        rotateObject(scene) {
-            scene.children.forEach(o => {
-                if (o.uploadedObject) {
-                    o.rotation.y += 0.005;
+        init(){
+            // Rendering scene
+            var that = this;
+            function animate(index) {
+                if (!that.animation) {
+                    return;
                 }
-            })
-        },
-        updateCubeWireframe() {
-            var cube = _.find(three.scene.children, {type:"Mesh"});
-            // cube.material.wireframe = !this.wireframe
+                three.renderer.render(three.scene, three.camera);
 
-            if (this.wireframe) {
-                cube.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
-            } else {
-                cube.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
+                stats.update();
+
+                requestAnimationFrame(animate);
             }
-        },
-        updateCubeSize(cubesize) {
-            var cube = _.find(three.scene.children, {type:"Mesh"});
-            cube.scale.x = cubesize
-            cube.scale.y = cubesize
-            cube.scale.z = cubesize
+
+            // Helper for displaying FPS
+            var stats = new Stats();
+            stats.dom.className = "viewport-stats"
+            this.$el.querySelector(".viewport-content").append( stats.dom );
+
+
+            // Enable animation loop
+            this.animation = true;
+            animate();
+
+            // Add scene to dom
+            this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
+
+            // Helper function for updating scene on screen resizing
+            window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
+            window.dispatchEvent(new Event("resize"));
         },
         updateCanvasSize(camera, renderer) {
             var width = this.$el.clientWidth;
@@ -96,57 +102,52 @@ export default {
             camera.right = width;
 
             camera.updateProjectionMatrix();
-        }
+        },
+        toggleWireframe() {
+            if (this.wireframe) {
+                this.mesh.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: true});
+            } else {
+                this.mesh.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
+            }
+        },
+        updateCubeSize(cubesize) {
+            var cube = _.find(three.scene.children, {type:"Mesh"});
+            cube.scale.x = cubesize
+            cube.scale.y = cubesize
+            cube.scale.z = cubesize
+        },
     },
     mounted() {
+        this.init();
 
-        function disposeArray() {
-            this.array = null;
+        // Prevent multiple camera's / meshes to be added
+        if (three.scene.initialised) {
+            this.mesh = _.find(three.scene.children, {type:"Mesh"});
+            return;
         }
+        // Everything below will only be added the first time that this component is mounted
 
+
+        // Set camera
         three.camera.position.z = 2.4
         three.camera.position.y = 2.4
         three.camera.position.x = 2.4
         three.camera.lookAt(0,0,0)
         three.scene.add(three.camera)
 
+
+        // Create object
         var geometry = new THREE.BoxGeometry(1,1,1);
-        var material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
-        var mesh = new THREE.Mesh(geometry, material);
-        three.scene.add(mesh);
+        var material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: true});
+        this.mesh = new THREE.Mesh(geometry, material);
+        three.scene.add(this.mesh);
 
-        // const planeSize = 8;
-        // const shadowGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
-        // const shadowMesh = new THREE.Mesh(shadowGeo, new THREE.MeshLambertMaterial({
-        //     transparent: true,    // so we can see the ground
-        //     depthWrite: false,    // so we don't have to sort
-        // }));
-        // shadowMesh.position.y = -0.5;  // so we're above the ground slightly
-        // shadowMesh.rotation.x = Math.PI * -.5;
-        // const shadowSize = 1 * 4;
-        // shadowMesh.scale.set(shadowSize, shadowSize, shadowSize);
-        // three.scene.add(shadowMesh);
 
-        var stats = new Stats();
-        stats.dom.className = "viewport-stats"
-		this.$el.querySelector(".viewport-content").append( stats.dom );
-
-        var that = this;
-        function animate(index) {
-            if ( that.animation !== true) {
-                return;
-            }
-
-            three.camera.updateProjectionMatrix();
-            three.renderer.render(three.scene, three.camera);
-
-			stats.update();
-            requestAnimationFrame(animate);
-        }
-        animate();
-		this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
-        window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
-        window.dispatchEvent(new Event("resize"));
+        three.scene.initialised = true;
+    },
+    unmounted() {
+        // This destroys the animation loop when navigating to another page
+        this.animation = false;
     }
 }
 </script>
