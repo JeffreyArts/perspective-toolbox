@@ -16,7 +16,7 @@
                 <div class="option-group" name="Face">
                     <div class="option">
                         <label for="point1">
-                            Point 1
+                            Point 1 <small>[x,y,z]</small>
                         </label>
 
                         <div class="group">
@@ -27,7 +27,7 @@
                     </div>
                     <div class="option">
                         <label for="point2">
-                            Point 2
+                            Point 2 <small>[x,y,z]</small>
                         </label>
 
                         <div class="group">
@@ -38,7 +38,7 @@
                     </div>
                     <div class="option">
                         <label for="point3">
-                            Point 3
+                            Point 3 <small>[x,y,z]</small>
                         </label>
 
                         <div class="group">
@@ -135,7 +135,7 @@ export default {
             var obj = _.find(three.scene.children, {type:"Mesh"});
 
             if (this.wireframe) {
-                obj.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: true});
+                obj.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
             } else {
                 obj.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
             }
@@ -152,7 +152,12 @@ export default {
 
         // Prevent multiple camera's / meshes to be added
         if (three.scene.initialised) {
-            this.mesh = _.find(three.scene.children, {type:"Mesh"});
+            this.geometry = _.find(three.scene.children, {type:"Mesh"}).geometry;
+            var pos = this.geometry.getAttribute("position").array;
+
+            this.point1 = [pos[0],pos[1],pos[2]];
+            this.point2 = [pos[3],pos[4],pos[5]];
+            this.point3 = [pos[6],pos[7],pos[8]];
             return;
         }
         // Everything below will only be added the first time that this component is mounted
@@ -167,9 +172,9 @@ export default {
 
         // Create object
         this.geometry = new THREE.BufferGeometry();
-        var material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: this.wireframe});
-        var mesh = new THREE.Mesh(this.geometry, material);
+        var mesh = new THREE.Mesh(this.geometry);
         three.scene.add(mesh);
+        this.toggleWireframe();
         this.updateFace();
 
 

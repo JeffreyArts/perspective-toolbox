@@ -105,7 +105,7 @@ export default {
         },
         toggleWireframe() {
             if (this.wireframe) {
-                this.mesh.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: true});
+                this.mesh.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
             } else {
                 this.mesh.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
             }
@@ -138,9 +138,10 @@ export default {
 
         // Create object
         var geometry = new THREE.BoxGeometry(1,1,1);
-        var material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: true});
-        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh = new THREE.Mesh(geometry);
         three.scene.add(this.mesh);
+        this.toggleWireframe();
+
 
 
         three.scene.initialised = true;
