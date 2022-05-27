@@ -1,8 +1,8 @@
 <template>
 
-    <div class="create-face">
+    <div class="create-triangle">
         <header class="title">
-            <h1>Create face</h1>
+            <h1>Create triangle</h1>
         </header>
 
         <hr>
@@ -20,9 +20,9 @@
                         </label>
 
                         <div class="group">
-                            <input type="number" id="point1" v-model="point1[0]" step="0.1" min="0" max="16" @change="updateFace(point1)">
-                            <input type="number" id="point1" v-model="point1[1]" step="0.1" min="0" max="16" @change="updateFace(point1)">
-                            <input type="number" id="point1" v-model="point1[2]" step="0.1" min="0" max="16" @change="updateFace(point1)">
+                            <input type="number" id="point1" v-model="point1[0]" step="0.1" min="0" max="16" @change="updateTriangle(point1)">
+                            <input type="number" id="point1" v-model="point1[1]" step="0.1" min="0" max="16" @change="updateTriangle(point1)">
+                            <input type="number" id="point1" v-model="point1[2]" step="0.1" min="0" max="16" @change="updateTriangle(point1)">
                         </div>
                     </div>
                     <div class="option">
@@ -31,9 +31,9 @@
                         </label>
 
                         <div class="group">
-                            <input type="number" id="point2" v-model="point2[0]" step="0.1" min="0" max="16" @change="updateFace(point2)">
-                            <input type="number" id="point2" v-model="point2[1]" step="0.1" min="0" max="16" @change="updateFace(point2)">
-                            <input type="number" id="point2" v-model="point2[2]" step="0.1" min="0" max="16" @change="updateFace(point2)">
+                            <input type="number" id="point2" v-model="point2[0]" step="0.1" min="0" max="16" @change="updateTriangle(point2)">
+                            <input type="number" id="point2" v-model="point2[1]" step="0.1" min="0" max="16" @change="updateTriangle(point2)">
+                            <input type="number" id="point2" v-model="point2[2]" step="0.1" min="0" max="16" @change="updateTriangle(point2)">
                         </div>
                     </div>
                     <div class="option">
@@ -42,20 +42,9 @@
                         </label>
 
                         <div class="group">
-                            <input type="number" id="point3" v-model="point3[0]" step="0.1" min="0" max="16" @change="updateFace(point3)">
-                            <input type="number" id="point3" v-model="point3[1]" step="0.1" min="0" max="16" @change="updateFace(point3)">
-                            <input type="number" id="point3" v-model="point3[2]" step="0.1" min="0" max="16" @change="updateFace(point3)">
-                        </div>
-                    </div>
-                    <div class="option">
-                        <label for="point4">
-                            Point 4 <small>[x,y,z]</small>
-                        </label>
-
-                        <div class="group">
-                            <input type="number" id="point4" v-model="point4[0]" step="0.1" min="0" max="16" @change="updateFace(point4)">
-                            <input type="number" id="point4" v-model="point4[1]" step="0.1" min="0" max="16" @change="updateFace(point4)">
-                            <input type="number" id="point4" v-model="point4[2]" step="0.1" min="0" max="16" @change="updateFace(point4)">
+                            <input type="number" id="point3" v-model="point3[0]" step="0.1" min="0" max="16" @change="updateTriangle(point3)">
+                            <input type="number" id="point3" v-model="point3[1]" step="0.1" min="0" max="16" @change="updateTriangle(point3)">
+                            <input type="number" id="point3" v-model="point3[2]" step="0.1" min="0" max="16" @change="updateTriangle(point3)">
                         </div>
                     </div>
 
@@ -96,7 +85,6 @@ export default {
             point1: [0,0,0],
             point2: [0,1,0],
             point3: [0,1,1],
-            point4: [0,0,1],
         }
     },
     methods: {
@@ -152,10 +140,10 @@ export default {
                 obj.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
             }
         },
-        updateFace() {
-            var positions = [].concat(this.point1, this.point2, this.point3, this.point4, this.point1, this.point3);
+        updateTriangle() {
+            var positions = [].concat(this.point1, this.point2, this.point3)
 
-            this.geometry.setAttribute( 'position', new THREE.BufferAttribute(new Float32Array(positions), 3 ) );
+            this.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
             this.geometry.computeVertexNormals();
         }
     },
@@ -187,7 +175,7 @@ export default {
         var mesh = new THREE.Mesh(this.geometry);
         three.scene.add(mesh);
         this.toggleWireframe();
-        this.updateFace();
+        this.updateTriangle();
 
 
         three.scene.initialised = true;
@@ -203,7 +191,7 @@ export default {
 <style lang="scss">
     @import '../../assets/scss/variables.scss';
 
-    .create-face {
+    .create-triangle {
         .viewport-content {
             display: flex;
             justify-content: center;
