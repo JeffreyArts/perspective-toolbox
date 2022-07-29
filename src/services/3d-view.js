@@ -19,8 +19,8 @@ const view3D  = {
 
         renderer.setSize( window.innerWidth*.8, window.innerHeight*.8 );
         // renderer.physicallyCorrectLights = true;
-        renderer.shadowMapEnabled = true;
-        renderer.shadowMapType = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         scene.background = new THREE.Color('#222'); // optional
 
