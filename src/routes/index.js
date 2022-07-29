@@ -3,6 +3,7 @@ import Home from "./home/home.vue";
 import OptionsOverview from "./options-overview/options-overview.vue";
 import CreateFace from "./create-face/create-face.vue";
 import CreateTriangle from "./create-triangle/create-triangle.vue";
+import ConvexGeometry from "./convex-geometry/convex-geometry.vue";
 import WireframeCube from "./wireframe-cube/wireframe-cube.vue";
 
 const routes = [
@@ -10,11 +11,6 @@ const routes = [
     path: "/",
     name: "Home",
     component: Home,
-  },
-  {
-    path: "/wireframe-cube",
-    name: "Wireframe cube",
-    component: WireframeCube,
   },
   {
     path: "/create-triangle",
@@ -27,9 +23,19 @@ const routes = [
     component: CreateFace,
   },
   {
-        path: "/options-overview",
-        name: "Options overview",
-        component: OptionsOverview,
+    path: "/convex-geometry",
+    name: "Convex geometry",
+    component: ConvexGeometry,
+  },
+  {
+    path: "/wireframe-cube",
+    name: "Wireframe cube",
+    component: WireframeCube,
+  },
+  {
+    path: "/options-overview",
+    name: "Options overview",
+    component: OptionsOverview,
   }
 ];
 
