@@ -4,6 +4,7 @@ import OptionsOverview from "./options-overview/options-overview.vue";
 import CreateFace from "./create-face/create-face.vue";
 import CreateTriangle from "./create-triangle/create-triangle.vue";
 import ConvexGeometry from "./convex-geometry/convex-geometry.vue";
+import Tube from "./tube/tube.vue";
 import WireframeCube from "./wireframe-cube/wireframe-cube.vue";
 
 const routes = [
@@ -26,6 +27,11 @@ const routes = [
     path: "/convex-geometry",
     name: "Convex geometry",
     component: ConvexGeometry,
+  },
+  {
+    path: "/tube",
+    name: "Tube",
+    component: Tube,
   },
   {
     path: "/wireframe-cube",
