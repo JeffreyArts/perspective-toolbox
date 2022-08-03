@@ -205,7 +205,7 @@ export default {
                 .onUpdate((v,i) => {
                     this.p2.x = radius * Math.sin(Math.PI * 2 * v.angle / 360);
                     this.p2.z = radius * Math.cos(Math.PI * 2 * v.angle / 360);
-                    this.updateLine();
+                    // this.updateLine();
                 })
                 .start() // Start the tween immediately.
         },
