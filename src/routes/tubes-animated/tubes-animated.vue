@@ -44,38 +44,38 @@
                 </div>
                 <div class="option-group" name="Model properties">
                     <div class="option column-group">
-                        <span>
+                        <div>
                             <label for="radius">
                                 Radius
                             </label>
                             <input type="number" id="radius" v-model.number="radius" step=".1" min=".1" max="10" v-on:change="updateLine()">
-                        </span>
-                        <span>
+                        </div>
+                        <div>
                             <label for="radialSegments">
                                 Radial segments
                             </label>
                             <input type="number" id="radialSegments" v-model.number="radialSegments" step="1" min="3" max="16" v-on:change="updateLine()">
-                        </span>
-                        <span>
+                        </div>
+                        <div>
                             <label for="tubularSegments">
                                 Tubular segments
                             </label>
                             <input type="number" id="tubularSegments" v-model.number="tubularSegments" step="1" min="1" max="10" v-on:change="updateLine()">
-                        </span>
+                        </div>
                     </div>
                     <div class="option column-group">
-                        <span class="column">
+                        <div class="column">
                             <label for="rows">
                                 Rows
                             </label>
                             <input type="number" id="rows" v-model.number="rows" step="1" min="1" max="10" v-on:change="createModels()">
-                        </span>
-                        <span class="column">
+                        </div>
+                        <div class="column">
                             <label for="columns">
                                 Columns
                             </label>
                             <input type="number" id="columns" v-model.number="columns" step="1" min="1" max="10" v-on:change="createModels()">
-                        </span>
+                        </div>
                     </div>
                     <div class="option">
                         <span>
@@ -128,6 +128,14 @@ export default {
             var that = this;
             function animate(index) {
                 if (!that.animation) {
+
+                    for (let i = three.scene.children.length - 1; i >= 0; i--) {
+                        if(three.scene.children[i].type === "Mesh") {
+                            three.scene.children[i].geometry.dispose();
+                            three.scene.children[i].material.dispose();
+                        }
+                        three.scene.remove(three.scene.children[i]);
+                    }
                     return;
                 }
                 three.renderer.render(three.scene, three.camera);
@@ -221,11 +229,7 @@ export default {
         this.init();
 
         // Prevent multiple camera's / meshes to be added
-        if (three.scene.initialised) {
-            this.model3D = _.find(three.scene.children, {type:"Mesh"}).geometry;
-            // var pos = this.model3D.getAttribute("position").array;
-            return;
-        }
+        
         // Everything below will only be added the first time that this component is mounted
 
         // Set camera
@@ -275,6 +279,17 @@ export default {
         }
         .column-group {
             display: flex;
+
+            input {
+                width: 48px;
+            }
+            .column {
+                display: flex;
+                flex-flow: column;
+                + .column {  
+                    margin-left: 16px;
+                }
+            }
         }
         // .column {
         //     width: 50%;
