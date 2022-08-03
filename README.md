@@ -1,3 +1,3 @@
-# Toolbox
+# Perpsective Toolbox
 
-This repo is a public repository of a personal workflow. It is made to provide a scaffolding for developing concepts, prototypes, or standalone tools. It is up to the user to give it shape to its own likings. But in the basis it is running Vue, with vue-router. Further more has already included some modules that I tend to enjoy using in my personal practice.t
+This repo is a public repository of some digital experiments related to an artistic project I am developing on the subject of perceptions. More on this will follow in the future. For now, you can pull this repo. Run `yarn install` & `yarn run dev`. This will show you a dashboard with various experiments made with ThreeJS
