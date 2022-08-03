@@ -5,6 +5,7 @@ import CreateFace from "./create-face/create-face.vue";
 import CreateTriangle from "./create-triangle/create-triangle.vue";
 import ConvexGeometry from "./convex-geometry/convex-geometry.vue";
 import Tube from "./tube/tube.vue";
+import TubesAnimated from "./tubes-animated/tubes-animated.vue";
 import WireframeCube from "./wireframe-cube/wireframe-cube.vue";
 
 const routes = [
@@ -32,6 +33,11 @@ const routes = [
     path: "/tube",
     name: "Tube",
     component: Tube,
+  },
+  {
+    path: "/tubes-animated",
+    name: "Tubes animated",
+    component: TubesAnimated,
   },
   {
     path: "/wireframe-cube",
