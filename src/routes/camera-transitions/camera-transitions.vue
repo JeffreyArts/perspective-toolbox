@@ -16,7 +16,7 @@
                 <div class="option-group" name="Move to">
                     <div class="option">
                         <!-- <label>Wireframe</label>÷ -->
-                        <button class="button" @click="moveTo(`cube-${index}`)" :style="{backgroundColor: cube.color}" v-for="cube, index in cubePositions">Cube {{index+1}}</button>
+                        <button class="button" @click="moveTo(index, 'top')" :style="{backgroundColor: cube.color}" v-for="cube, index in cubePositions">Cube {{index+1}}</button>
                     </div>
                 </div>
                 <div class="option-group" name="Options">
@@ -65,6 +65,8 @@ export default {
                 three.camera,
                 three.renderer.domElement
             ),
+            mouseDown: false,
+            clickTimeout: null,
             transitionType: "Quartic.InOut",
             transitionTypes: {
                 "Linear.None": TWEEN.Easing.Linear.None,
@@ -153,12 +155,34 @@ export default {
 
             camera.updateProjectionMatrix();
         },
-        moveTo(cubeName) {
-            var cube = _.find(three.scene.children, {name:cubeName});
+        moveTo(cube, face) {
+            var center = null;
+            if (_.isNumber(cube)) {
+                var cubes = _.compact(_.map(three.scene.children, object => {
+                    if (object.type == "Group") {
+                        return object;
+                    }
+                }));
+                center = cubes[cube].position.clone();
+            } else {
+                center = cube.position.clone();
+            }
             const tmpCamera = three.camera.clone();
-            tmpCamera.position.set( cube.position.x, cube.position.y+8, cube.position.z+8)
-            tmpCamera.lookAt( cube.position.x, cube.position.y, cube.position.z)
-            
+            switch (face) {
+                case "right":
+                    tmpCamera.position.set( center.x+8, center.y+1.6, center.z)
+                break; case "left":
+                    tmpCamera.position.set( center.x-8, center.y+1.6, center.z)
+                break;case "front":
+                    tmpCamera.position.set( center.x, center.y+1.6, center.z+8)
+                break; case "back":
+                    tmpCamera.position.set( center.x, center.y+1.6, center.z-8)
+                break;
+                default: 
+                    tmpCamera.position.set( center.x+8, center.y+8, center.z+ 8)
+            }
+            tmpCamera.lookAt( center.x, center.y, center.z)
+
             new TWEEN.Tween( three.camera.quaternion)   
                 .to( tmpCamera.quaternion, this.transitionDuration )
                 .easing( this.transitionTypes[this.transitionType] )
@@ -168,30 +192,81 @@ export default {
                 .to( tmpCamera.position, this.transitionDuration )
                 .easing( this.transitionTypes[this.transitionType] )
                 .start( )
-            
+
             new TWEEN.Tween( three.controls.target)   
-                .to( cube.position, this.transitionDuration )
+                .to( center, this.transitionDuration )
                 .easing( this.transitionTypes[this.transitionType] )
                 .start( )
                 .onComplete(() => {
-                    three.controls.target.set( cube.position.x, cube.position.y, cube.position.z );
+                    three.controls.target.set( center.x, center.y, center.z );
                 } );
                 
         },
+        createCube(cp) {
+            var group = new THREE.Group();
+            const material = new THREE.MeshLambertMaterial({color: cp.color, wireframe: false});
+            const geometry = {
+                top: new THREE.BoxGeometry(1,0.1,1),
+                bottom: new THREE.BoxGeometry(1,0.1,1),
+                left: new THREE.BoxGeometry(0.1,1,1),
+                right: new THREE.BoxGeometry(0.1,1,1),
+                front: new THREE.BoxGeometry(1,1,0.1),
+                back: new THREE.BoxGeometry(1,1,0.1),
+            }
+            var top = new THREE.Mesh(geometry.top, material)
+            top.position.y = 1 - 0.05;
+            top.name = 'top'
+
+            var bottom = new THREE.Mesh(geometry.bottom, material)
+            bottom.position.y = 0.05;
+            bottom.name = 'bottom'
+
+            var left = new THREE.Mesh(geometry.left, material)
+            left.position.x = -0.5 + 0.05;
+            left.position.y = 0.5;
+            left.name = 'left'
+
+            var right = new THREE.Mesh(geometry.right, material)
+            right.position.x = 0.5 - 0.05;
+            right.position.y = 0.5;
+            right.name = 'right'
+
+            var front = new THREE.Mesh(geometry.front, material)
+            front.position.z = 0.5 - 0.05;
+            front.position.y = 0.5;
+            front.name = 'front'
+
+            var back = new THREE.Mesh(geometry.back, material)
+            back.position.z = -0.5 + 0.05;
+            back.position.y = 0.5;
+            back.name = 'back'
+
+            group.add(top, bottom, left, right, front, back);
+            return group
+        },
         addCubes(cubesize) {
-            var geometry = new THREE.BoxGeometry(1,1,1);
-            var cube = null;
             _.each(this.cubePositions, (cp, index) => {
-                var material = new THREE.MeshLambertMaterial({color: cp.color, wireframe: false});
-                cube = new THREE.Mesh(geometry, material);
+                var cube = this.createCube(cp);
                 cube.position.x = cp.x;
                 cube.position.z = cp.z;
                 cube.name = `cube-${index}`
-
-                this.interactionManager.add(cube);
-                cube.addEventListener("click", (event) => {
-                    this.moveTo(event.target.name)
-                });
+                _.each(cube.children, face => {
+                    this.interactionManager.add(face);
+                    face.addEventListener("mousedown", (event) => {
+                        clearTimeout(this.clickTimeout);
+                        const start = {
+                            x: event.coords.x,
+                            y: event.coords.y
+                        }
+                        event.stopPropagation();
+                        var target = event.target
+                        this.clickTimeout = setTimeout(() => {
+                            if (!this.mouseDown) {
+                                this.moveTo(cube, target.name)
+                            }
+                        }, 160)
+                    });
+                })
                 
                 three.scene.add(cube)
             })
@@ -218,6 +293,13 @@ export default {
 
         // Create object
         this.addCubes()
+
+        document.body.onmousedown = (evt)  =>{ 
+            this.mouseDown = true
+        }
+        document.body.onmouseup = (evt) => {
+            this.mouseDown = false
+        }
 
 
 
