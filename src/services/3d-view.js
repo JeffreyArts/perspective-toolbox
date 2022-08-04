@@ -6,7 +6,7 @@ const view3D  = {
     init: (opts = {}) => {
         const dimensions = {
           width: 36,
-          height: 36,
+          height: 256,
           depth: 36
         }
 
