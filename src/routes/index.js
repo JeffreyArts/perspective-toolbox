@@ -1,6 +1,7 @@
 import { createWebHistory, createRouter } from "vue-router";
 import Home from "./home/home.vue";
 import OptionsOverview from "./options-overview/options-overview.vue";
+import CameraTransitions from "./camera-transitions/camera-transitions.vue";
 import CreateFace from "./create-face/create-face.vue";
 import CreateTriangle from "./create-triangle/create-triangle.vue";
 import ConvexGeometry from "./convex-geometry/convex-geometry.vue";
@@ -13,6 +14,11 @@ const routes = [
     path: "/",
     name: "Home",
     component: Home,
+  },
+  {
+    path: "/camera-transitions",
+    name: "Camera transitions",
+    component: CameraTransitions,
   },
   {
     path: "/create-triangle",

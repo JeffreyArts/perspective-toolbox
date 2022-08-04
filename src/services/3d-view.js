@@ -59,15 +59,17 @@ const view3D  = {
         }
         animate();
 
-        if (opts.orbitControls) {
-            new OrbitControls( camera, renderer.domElement );
-        }
-
-        return {
+        const res =  {
             scene: scene,
             renderer:renderer,
             camera: camera,
         }
+
+        if (opts.orbitControls) {
+            res.controls = new OrbitControls( camera, renderer.domElement );
+        }
+
+        return res
     },
 }
 
