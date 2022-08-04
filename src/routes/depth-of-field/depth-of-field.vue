@@ -65,11 +65,14 @@ import * as THREE from 'three';
 import _ from 'lodash';
 
 import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
-// import { OrbitControls } from './../../../node_modules/three/examples/jsm/controls/OrbitControls.js';
 import view from './../../services/3d-view.js';
 
-var three = view.init({orbitControls: true})
+import { EffectComposer } from './../../../node_modules/three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from './../../../node_modules/three/examples/jsm/postprocessing/RenderPass.js';
+import { BokehPass } from './../../../node_modules/three/examples/jsm/postprocessing/BokehPass.js';
 
+var three = view.init({orbitControls: true})
+const postprocessing = {};
 
 export default {
     props: [],
@@ -81,7 +84,12 @@ export default {
             spacing: 8,
             scatter: 0,
             rows: 16,
-            columns: 16
+            columns: 16,
+            effectController: {
+                focus: 500.0,
+                aperture: 5,
+                maxblur: 0.01
+            }	
         }
     },
     watch: {
@@ -93,6 +101,10 @@ export default {
     },
     methods: {
         init(){
+            three.renderer.autoClear = false;
+            // Depth of field dof
+            this.initPostprocessing();
+
             // Rendering scene
             var that = this;
             function animate(index) {
@@ -103,8 +115,10 @@ export default {
 
                 stats.update();
 
+                postprocessing.composer.render( 0.1 );
                 requestAnimationFrame(animate);
             }
+            
 
             // Helper for displaying FPS
             var stats = new Stats();
@@ -112,16 +126,37 @@ export default {
             this.$el.querySelector(".viewport-content").append( stats.dom );
 
 
-            // Enable animation loop
-            this.animation = true;
-            animate();
-
             // Add scene to dom
             this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
 
             // Helper function for updating scene on screen resizing
             window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
             window.dispatchEvent(new Event("resize"));
+
+
+            // Enable animation loop
+            this.animation = true;
+            animate();
+        },
+        initPostprocessing() {
+
+            const renderPass = new RenderPass( three.scene, three.camera );
+
+            const bokehPass = new BokehPass( three.scene, three.camera, {
+                focus: 16,
+                aperture: 0.0001,
+                maxblur: 128,
+                width: this.$el.clientWidth,
+                height: this.$el.clientHeight
+            } );
+
+            const composer = new EffectComposer( three.renderer );
+
+            composer.addPass( renderPass );
+            composer.addPass( bokehPass );
+
+            postprocessing.composer = composer;
+            postprocessing.bokeh = bokehPass;
         },
         updateCanvasSize(camera, renderer) {
             var width = this.$el.clientWidth;
@@ -134,6 +169,8 @@ export default {
             camera.right = width;
 
             camera.updateProjectionMatrix();
+
+            postprocessing.composer.setSize( width, height );
         },
         addGrid() {
             for (let i = three.scene.children.length - 1; i >= 0; i--) {
