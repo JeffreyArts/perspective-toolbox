@@ -16,7 +16,7 @@
                 <div class="option-group" name="Move to">
                     <div class="option">
                         <!-- <label>Wireframe</label>÷ -->
-                        <button class="button" @click="moveTo(`cube-${index}`)" :style="{backgroundColor: cube.color}" v-for="cube, index in cubePositions" :key="key">Cube {{index+1}}</button>
+                        <button class="button" @click="moveTo(`cube-${index}`)" :style="{backgroundColor: cube.color}" v-for="cube, index in cubePositions">Cube {{index+1}}</button>
                     </div>
                 </div>
                 <div class="option-group" name="Options">
