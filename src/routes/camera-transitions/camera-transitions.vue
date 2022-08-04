@@ -51,9 +51,8 @@ import _ from 'lodash';
 import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
 import view from '../../services/3d-view.js';
 import TWEEN from '@tweenjs/tween.js';
-
-var three = view.init({orbitControls: true})
-
+import { InteractionManager } from "three.interactive";
+const three = view.init({orbitControls: true});
 
 export default {
     props: [],
@@ -61,6 +60,11 @@ export default {
         return {
             animation: true,
             transitionDuration: 800,
+            interactionManager: new InteractionManager(
+                three.renderer,
+                three.camera,
+                three.renderer.domElement
+            ),
             transitionType: "Quartic.InOut",
             transitionTypes: {
                 "Linear.None": TWEEN.Easing.Linear.None,
@@ -113,7 +117,7 @@ export default {
                     return;
                 }
                 three.renderer.render(three.scene, three.camera);
-
+                that.interactionManager.update();
                 stats.update();
                 TWEEN.update(index)
 
@@ -151,13 +155,9 @@ export default {
         },
         moveTo(cubeName) {
             var cube = _.find(three.scene.children, {name:cubeName});
-            console.log(three.camera)
-            const targetOrientation = new THREE.Quaternion().set(cube.position.x, cube.position.y, cube.position.z, 1).normalize();
-            const tmpCamera = new THREE.PerspectiveCamera( 35, 1, 0.1, 1000 );
-            tmpCamera.position.set( cube.position.x, cube.position.y+10, cube.position.z+5)
+            const tmpCamera = three.camera.clone();
+            tmpCamera.position.set( cube.position.x, cube.position.y+8, cube.position.z+8)
             tmpCamera.lookAt( cube.position.x, cube.position.y, cube.position.z)
-            console.log(tmpCamera)
-
             
             new TWEEN.Tween( three.camera.quaternion)   
                 .to( tmpCamera.quaternion, this.transitionDuration )
@@ -187,6 +187,12 @@ export default {
                 cube.position.x = cp.x;
                 cube.position.z = cp.z;
                 cube.name = `cube-${index}`
+
+                this.interactionManager.add(cube);
+                cube.addEventListener("click", (event) => {
+                    this.moveTo(event.target.name)
+                });
+                
                 three.scene.add(cube)
             })
         },
