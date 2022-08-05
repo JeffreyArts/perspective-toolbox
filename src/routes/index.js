@@ -6,6 +6,7 @@ import CreateFace from "./create-face/create-face.vue";
 import CreateTriangle from "./create-triangle/create-triangle.vue";
 import ConvexGeometry from "./convex-geometry/convex-geometry.vue";
 import DepthOfField from "./depth-of-field/depth-of-field.vue";
+import TextToThreeJS from "./text-to-threejs/text-to-threejs.vue";
 import Tube from "./tube/tube.vue";
 import TubesAnimated from "./tubes-animated/tubes-animated.vue";
 import WireframeCube from "./wireframe-cube/wireframe-cube.vue";
@@ -40,6 +41,11 @@ const routes = [
     path: "/depth-of-field",
     name: "Depth of field",
     component: DepthOfField,
+  },
+  {
+    path: "/text-to-threejs",
+    name: "Text to Three.js",
+    component: TextToThreeJS,
   },
   {
     path: "/tube",
