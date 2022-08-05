@@ -1,6 +1,6 @@
 <template>
 
-    <div class="options-overview">
+    <div class="camera-transitions">
         <header class="title">
             <h1>Camera-transitions</h1>
         </header>

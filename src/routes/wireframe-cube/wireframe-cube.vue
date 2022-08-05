@@ -1,6 +1,6 @@
 <template>
 
-    <div class="options-overview">
+    <div class="wireframe-cube">
         <header class="title">
             <h1>Wireframe cube</h1>
         </header>
@@ -158,7 +158,7 @@ export default {
 
     @import '../../assets/scss/variables.scss';
 
-    .options-overview {
+    .wireframe-cube {
         .viewport-content {
             display: flex;
             justify-content: center;

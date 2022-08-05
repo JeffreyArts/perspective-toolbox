@@ -187,7 +187,7 @@ export default {
         // Everything below will only be added the first time that this component is mounted
 
         // Set camera
-        three.camera.position.z = 0
+        three.camera.position.z = 48
         three.camera.position.y = 48
         three.camera.position.x = 0
         three.camera.lookAt(0,0,0)

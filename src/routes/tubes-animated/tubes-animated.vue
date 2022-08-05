@@ -113,11 +113,11 @@ export default {
             wireframe: true,
             line: null,
             radius: 1,
-            rows: 1,
-            columns: 1,
+            rows: 3,
+            columns: 3,
             radialSegments: 8,
             tubularSegments: 2,
-            material: null,
+            material: new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false}),
             p1: new THREE.Vector3(0,0,0),
             p2: new THREE.Vector3(0,8,0),
         }
@@ -175,11 +175,7 @@ export default {
             camera.updateProjectionMatrix();
         },
         toggleWireframe() {
-            if (this.wireframe) {
-                this.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
-            } else {
-                this.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
-            }
+            this.material.wireframe = this.wireframe
         },
         createModels() {
             for (let i = three.scene.children.length - 1; i >= 0; i--) {
@@ -192,13 +188,14 @@ export default {
             this.line = new THREE.LineCurve3( this.p1,  this.p2 )
             const tubeGeometry = new THREE.TubeBufferGeometry( this.line, this.tubularSegments, this.radius, this.radialSegments, false);
             this.model3D = new THREE.Mesh( tubeGeometry, this.material );
+            var offset = 4;
             var width = this.rows
             var height = this.columns
             for (var x=0; x<width; x++) {
                 for (var y=0; y<height; y++) {
                     var newModel = this.model3D.clone()
-                    newModel.position.x = x*4 - width*4/2;
-                    newModel.position.z = y*4 - height*4/2;
+                    newModel.position.x = x*offset - width*offset/2 + offset/2;
+                    newModel.position.z = y*offset - height*offset/2+ offset/2;
                     three.scene.add(newModel);
                 }
             }

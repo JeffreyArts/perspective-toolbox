@@ -303,6 +303,13 @@ export default {
                 }
             }
         }
-        
+    }
+    
+    body.__menuOpen {
+        .text-to-threejs {
+            .sidebar {
+                width: calc(100vw - (100vh - 148px) - 40px - 96px - 320px);
+            }
+        }
     }
 </style>

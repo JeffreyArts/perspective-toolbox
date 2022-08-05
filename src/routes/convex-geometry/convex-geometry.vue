@@ -9,7 +9,7 @@
             <div class="viewport-content" ratio="1x1" />
             <span class="source">
                 source:
-                <a href="https://threejs.org/examples/?q=convex#webgl_geometry_convex">webgl_geometry_convex</a>
+                <a href="https://threejs.org/examples/?q=convex#webgl_geometry_convex" target="_blank">webgl_geometry_convex</a>
             </span>
         </section>
 
@@ -61,6 +61,7 @@ export default {
         return {
             animation: true,
             wireframe: true,
+            convex: true,
 
             point1: [0,0,0],
             point2: [0,1,0],
