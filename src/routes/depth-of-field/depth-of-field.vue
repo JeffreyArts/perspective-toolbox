@@ -8,6 +8,10 @@
         <hr>
         <section class="viewport">
             <div class="viewport-content" ratio="1x1" />
+            <span class="source">
+                source:
+                <a href="https://threejs.org/examples/?q=dof#webgl_postprocessing_dof" target="_blank">Bokeh in Three.js</a>
+            </span>
         </section>
 
         <aside class="sidebar">
@@ -268,6 +272,36 @@ export default {
                 flex-flow: column;
                 + .column {  
                     margin-left: 16px;
+                }
+            }
+        }
+        .source {
+            text-align: center;
+            width: 100%;
+            margin-top: 32px;
+            font-size: 12px;
+            display: inline-block;
+                
+            a {
+                text-decoration: none;
+                color :#fff;
+                display: inline-block;
+                transition: .32s all linear;
+
+                &:hover {
+                    color: $accentColor;
+                    text-decoration: underline;
+                    &:after {
+                        font-size: .8em;
+                        transform: translate(6px, -4px);
+                    }
+                }
+                &:after {
+                    content: "↗";
+                    font-size: .5em;
+                    transform: translate(6px, -5px);
+                    transition: .16s all linear;
+                    display: inline-block;
                 }
             }
         }
