@@ -315,4 +315,25 @@ export default {
 
 <style lang="scss">
 
+    @import '../../assets/scss/variables.scss';
+
+    .camera-transitions {
+        .viewport-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: $accentColor;
+            font-size: 16vw;
+            position:relative;
+
+            canvas {
+                max-width: 100%;
+                max-height: 100%;
+            }
+        }
+
+        .viewport-stats {
+            position: absolute !important;
+        }
+    }
 </style>

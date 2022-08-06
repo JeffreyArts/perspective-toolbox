@@ -229,12 +229,6 @@ export default {
 
         // Prevent multiple camera's / meshes to be added
         if (three.scene.initialised) {
-            this.geometry = _.find(three.scene.children, {type:"Mesh"}).geometry;
-            var pos = this.geometry.getAttribute("position").array;
-
-            this.point1 = [pos[0],pos[1],pos[2]];
-            this.point2 = [pos[3],pos[4],pos[5]];
-            this.point3 = [pos[6],pos[7],pos[8]];
             return;
         }
         // Everything below will only be added the first time that this component is mounted
