@@ -1,40 +1,76 @@
 <template>
 
-    <div class="camera-transitions">
+    <div class="orbit-controls">
         <header class="title">
-            <h1>Camera-transitions</h1>
+            <h1>Orbit controls</h1>
         </header>
 
         <hr>
         <section class="viewport">
             <div class="viewport-content" ratio="1x1" />
+            <span class="source">
+                source:
+                <a href="https://stackoverflow.com/questions/15827074/how-do-i-put-limits-on-orbitcontrol" target="_blank">Orbit controls limits</a>
+            </span>
         </section>
+
+       
 
         <aside class="sidebar">
             <div class="options">
 
-                <div class="option-group" name="Move to">
-                    <div class="option">
-                        <!-- <label>Wireframe</label>÷ -->
-                        <button class="button" @click="moveTo(index, 'top')" :style="{backgroundColor: cube.color}" v-for="cube, index in cubePositions">Cube {{index+1}}</button>
-                    </div>
-                </div>
                 <div class="option-group" name="Options">
-                    
-                    
                     <div class="option">
-                        <label for="transitionType">
-                            Transition type
-                            <select name="transitionType" v-model="transitionType" >
-                                <option v-for="(tween, index) in transitionTypes" :value="index">{{index}}</option>
-                            </select>
+                        <label for="far">
+                            Vertical radius
                         </label>
+                        <MultiRangeSlider
+                            :baseClassName="'multi-range-slider'"
+                            :min="0"
+                            :max="180"
+                            :step="1"
+                            :ruler="false"
+                            :minValue="radiusVertMin"
+                            :maxValue="radiusVertMax"
+                            @input="updateOrbitRadius"
+                        />
                     </div>
                     <div class="option">
-                        <label for="transitionDuration">
-                            Transition duration
-                            <input name="transitionDuration" v-model.number="transitionDuration" />
+                        <label for="far">
+                            Zoom
                         </label>
+                        <MultiRangeSlider
+                            :baseClassName="'multi-range-slider'"
+                            :min="0"
+                            :max="32"
+                            :step=".1"
+                            :ruler="false"
+                            :minValue="zoomMin"
+                            :maxValue="zoomMax"
+                            @input="updateOrbitZoom"
+                        />
+                    </div>
+                    <!-- <div class="option">
+                        <label for="far">
+                            Vertical radius (min)
+                        </label>
+                        <input type="range" id="radiusVertMin" v-model.number="radiusVertMin" step="1" min="1" max="180" @change="updateOrbitRadius()">
+                        <input type="number"  min="1" max="180" v-model.number="radiusVertMin" @change="updateOrbitRadius()">
+                    </div>
+                    <div class="option">
+                        <label for="far">
+                            Vertical radius (max)
+                        </label>
+                        <input type="range" id="radiusVertMax" v-model.number="radiusVertMax" step="1" min="1" max="180" @change="updateOrbitRadius()">
+                        <input type="number"  min="1" max="180" v-model.number="radiusVertMax" @change="updateOrbitRadius()">
+                    </div> -->
+                    <div class="option">
+                        <span>
+                            <input type="checkbox" id="checkbox-v0" v-model="showGroundplane" v-on:change="toggleGroundPlane()">
+                            <label for="checkbox-v0">
+                                Ground plane
+                            </label>
+                        </span>
                     </div>
                 </div>
 
@@ -48,18 +84,28 @@
 import * as THREE from 'three';
 import _ from 'lodash';
 
+import MultiRangeSlider from "multi-range-slider-vue";
 import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
 import view from '../../services/3d-view.js';
+import degreesToRadians from '../../services/degrees-to-radians.js';
 import TWEEN from '@tweenjs/tween.js';
 import { InteractionManager } from "three.interactive";
 const three = view.init({orbitControls: true});
 
 export default {
     props: [],
+    components: {
+        MultiRangeSlider
+    },
     data() {
         return {
             animation: true,
             transitionDuration: 800,
+            zoomMin: 2,
+            zoomMax: 8,
+            radiusVertMin: 90,
+            radiusVertMax: 180,
+            showGroundplane: true,
             interactionManager: new InteractionManager(
                 three.renderer,
                 three.camera,
@@ -100,14 +146,7 @@ export default {
                 "Bounce.In": TWEEN.Easing.Bounce.In,
                 "Bounce.Out": TWEEN.Easing.Bounce.Out,
                 "Bounce.InOut": TWEEN.Easing.Bounce.InOut,
-            },
-            cubePositions: [
-                {x: 0, z:0, y:0, color: "#f06"},
-                {x: -4, z:4, y:0, color: "#f09"},
-                {x: 5, z:2, y:0, color: "#90f"},
-                {x: 3, z:-2, y:0, color: "#60f"},
-                {x: -8, z:0, y:0, color: "#00f"}
-            ]
+            }
         }
     },
     methods: {
@@ -167,6 +206,7 @@ export default {
             } else {
                 center = cube.position.clone();
             }
+            center.y = 0.5;
             const tmpCamera = three.camera.clone();
             switch (face) {
                 case "right":
@@ -183,28 +223,47 @@ export default {
             }
             tmpCamera.lookAt( center.x, center.y, center.z)
 
+            // if (three.camera.quaternion._w <= 0 ) {
+            //     console.log("SWITCH 1")
+            //     three.camera.quaternion._x = -three.camera.quaternion._x
+            //     three.camera.quaternion._y = -three.camera.quaternion._y
+            //     three.camera.quaternion._z = -three.camera.quaternion._z
+            //     three.camera.quaternion._w = Math.abs(three.camera.quaternion._w)
+            // }
+            console.log("start", three.camera.quaternion,"\r\n", "end",tmpCamera.quaternion)
             new TWEEN.Tween( three.camera.quaternion)   
                 .to( tmpCamera.quaternion, this.transitionDuration )
-                .easing( this.transitionTypes[this.transitionType] )
+                .easing( TWEEN.Easing.Quartic.In )
                 .start( );
             
             new TWEEN.Tween( three.camera.position)   
                 .to( tmpCamera.position, this.transitionDuration )
-                .easing( this.transitionTypes[this.transitionType] )
+                .easing( TWEEN.Easing.Quartic.In )
                 .start( )
 
             new TWEEN.Tween( three.controls.target)   
                 .to( center, this.transitionDuration )
-                .easing( this.transitionTypes[this.transitionType] )
+                .easing( TWEEN.Easing.Quartic.In )
                 .start( )
                 .onComplete(() => {
                     three.controls.update();
                 } );
                 
         },
-        createCube(cp) {
+        createGroundplane() {
+            const geometry = new THREE.PlaneGeometry( 320, 320 ); // update with height/width of image
+            const material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
+            const plane = new THREE.Mesh( geometry, material );
+            plane.position.x = 0;
+            plane.position.y = 0;
+            plane.position.z = 0;
+            plane.rotation.x = Math.PI / 2;;
+            plane.name = "groundplane"
+            three.scene.add( plane );
+        },
+        createCube() {
             var group = new THREE.Group();
-            const material = new THREE.MeshLambertMaterial({color: cp.color, wireframe: false});
+            const material = new THREE.MeshLambertMaterial({color: "#ff0099", wireframe: false});
             const geometry = {
                 top: new THREE.BoxGeometry(1,0.1,1),
                 bottom: new THREE.BoxGeometry(1,0.1,1),
@@ -242,34 +301,49 @@ export default {
             back.name = 'back'
 
             group.add(top, bottom, left, right, front, back);
-            return group
-        },
-        addCubes(cubesize) {
-            _.each(this.cubePositions, (cp, index) => {
-                var cube = this.createCube(cp);
-                cube.position.x = cp.x;
-                cube.position.z = cp.z;
-                cube.name = `cube-${index}`
-                _.each(cube.children, face => {
-                    this.interactionManager.add(face);
-                    face.addEventListener("mousedown", (event) => {
-                        clearTimeout(this.clickTimeout);
-                        const start = {
-                            x: event.coords.x,
-                            y: event.coords.y
+            
+            _.each(group.children, face => {
+                this.interactionManager.add(face);
+                face.addEventListener("mousedown", (event) => {
+                    clearTimeout(this.clickTimeout);
+                    const start = {
+                        x: event.coords.x,
+                        y: event.coords.y
+                    }
+                    event.stopPropagation();
+                    var target = event.target
+                    this.clickTimeout = setTimeout(() => {
+                        if (!this.mouseDown) {
+                            this.moveTo(group, target.name)
                         }
-                        event.stopPropagation();
-                        var target = event.target
-                        this.clickTimeout = setTimeout(() => {
-                            if (!this.mouseDown) {
-                                this.moveTo(cube, target.name)
-                            }
-                        }, 160)
-                    });
-                })
-                
-                three.scene.add(cube)
+                    }, 160)
+                });
             })
+            
+            three.scene.add(group)
+        },
+        updateOrbitRadius(data) {
+            if (data) {
+                this.radiusVertMin = data.minValue
+                this.radiusVertMax = data.maxValue
+            }
+
+            three.controls.target.set(0, .5, 0 );
+            three.controls.maxPolarAngle = degreesToRadians(180 - this.radiusVertMin); 
+            three.controls.minPolarAngle = degreesToRadians(180 - this.radiusVertMax); 
+        },
+        updateOrbitZoom(data) {
+            if (data) {
+                this.zoomMin = data.minValue
+                this.zoomMax = data.maxValue
+            }
+            
+            three.controls.minDistance = this.zoomMin;
+            three.controls.maxDistance = this.zoomMax;
+        },
+        toggleGroundPlane() {
+            const groundplane = _.find(three.scene.children, {name:"groundplane"});
+            groundplane.material.visible = this.showGroundplane
         },
     },
     mounted() {
@@ -277,7 +351,7 @@ export default {
 
         // Prevent multiple camera's / meshes to be added
         if (three.scene.initialised) {
-            this.mesh = _.find(three.scene.children, {type:"Mesh"});
+            // this.mesh = _.find(three.scene.children, {type:"Mesh"});
             return;
         }
         // Everything below will only be added the first time that this component is mounted
@@ -290,9 +364,13 @@ export default {
         three.camera.lookAt(0,0,0)
         three.scene.add(three.camera)
 
+        // Update orbit controls
+        this.updateOrbitRadius()
+        this.updateOrbitZoom()
 
         // Create object
-        this.addCubes()
+        this.createCube()
+        this.createGroundplane()
 
         document.body.onmousedown = (evt)  =>{ 
             this.mouseDown = true
@@ -317,7 +395,7 @@ export default {
 
     @import '../../assets/scss/variables.scss';
 
-    .camera-transitions {
+    .orbit-controls {
         .viewport-content {
             display: flex;
             justify-content: center;
@@ -336,4 +414,100 @@ export default {
             position: absolute !important;
         }
     }
+    
+    .multi-range-slider {
+        border: 0 none transparent;
+        border-radius: 0;
+        padding: 16px 0px 32px;
+        box-shadow: none;
+
+        .bar-right,
+        .bar-left {
+            padding: 0;
+            height: 4px;
+        }
+
+        .bar-inner {
+            height: 12px;
+            transform:translateY(-4px);
+            background-color: #ff0066;
+            position: relative;
+            &:after {
+                content: '';
+                background-color: #fff;
+                opacity: 0.16;
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                top: 0;
+                right: 0;
+            }
+        }
+
+        .thumb {
+            &:before {
+                width: 16px;
+                height: 16px;
+                margin-top: -6px;
+                background-color: #ff0066;
+                border: 0 none transparent;
+                box-shadow: none;
+            } 
+
+            .caption {
+                left: -16px;
+                bottom:4px;
+                display: block;
+                * {
+                    background-color: transparent;
+                    box-shadow: none;
+                    font-family: FixedSys;
+                }
+            }
+        } 
+
+        .bar-left,
+        .bar-inner,
+        .bar-right {
+            box-shadow: none;
+        }
+        .labels {
+            margin-top: 24px;
+            .label + .label {
+                text-align: right;
+            }
+        }
+    }
+        
+    .source {
+        text-align: center;
+        width: 100%;
+        margin-top: 32px;
+        font-size: 12px;
+        display: inline-block;
+            
+        a {
+            text-decoration: none;
+            color :#fff;
+            display: inline-block;
+            transition: .32s all linear;
+
+            &:hover {
+                color: $accentColor;
+                text-decoration: underline;
+                &:after {
+                    font-size: .8em;
+                    transform: translate(6px, -4px);
+                }
+            }
+            &:after {
+                content: "↗";
+                font-size: .5em;
+                transform: translate(6px, -5px);
+                transition: .16s all linear;
+                display: inline-block;
+            }
+        }
+    }
+
 </style>
