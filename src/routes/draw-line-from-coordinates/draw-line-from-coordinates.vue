@@ -277,6 +277,16 @@ export default {
                     result.y = 0;
                     result.z = degreesToRadians(rotation);
                 }
+            } else if (line.data.side == 'bottom' || line.data.side == 'top') {
+                if (Math.abs(line.data.start.x - line.data.end.x)) {
+                    result.x = 0;
+                    result.y = degreesToRadians(rotation);
+                    result.z = 0;
+                } else {
+                    result.x = degreesToRadians(rotation);
+                    result.y = 0;
+                    result.z = 0;
+                }
             }
             return result;
         },
@@ -322,7 +332,6 @@ export default {
                     result.y = line.data.start.y;
                 }
             } else if (line.data.side == 'front') {
-                var startX = 0;
                 result.x = 0
                 if (line.data.start.y > line.data.end.y) {
                     result.z = line.data.start.x;
@@ -352,6 +361,37 @@ export default {
                 } else if (line.data.start.x < line.data.end.x) {
                     result.z = startX - line.data.start.x - line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
                     result.y = line.data.start.y;
+                }
+            } else if (line.data.side == 'bottom') {
+                result.y = 0;
+                var startX =  this.cube.width -1;
+                if (line.data.start.y > line.data.end.y) {
+                    result.z = startX - line.data.start.x;
+                    result.x = line.data.end.y + line.data.length/2;
+                } else if (line.data.start.y < line.data.end.y) {
+                    result.z = startX - line.data.start.x;
+                    result.x = line.data.start.y + line.data.length/2;
+                } else if (line.data.start.x > line.data.end.x) {
+                    result.z = startX - line.data.end.x - line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
+                    result.x = line.data.start.y;
+                } else if (line.data.start.x < line.data.end.x) {
+                    result.z = startX - line.data.start.x - line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
+                    result.x = line.data.start.y;
+                }
+            } else if (line.data.side == 'top') {
+                result.y = this.cube.height -1;
+                if (line.data.start.y > line.data.end.y) {
+                    result.z = line.data.start.x;
+                    result.x = line.data.end.y + line.data.length/2;
+                } else if (line.data.start.y < line.data.end.y) {
+                    result.z = line.data.start.x;
+                    result.x = line.data.start.y + line.data.length/2;
+                } else if (line.data.start.x > line.data.end.x) {
+                    result.z = line.data.end.x + line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
+                    result.x = line.data.start.y;
+                } else if (line.data.start.x < line.data.end.x) {
+                    result.z = line.data.start.x + line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
+                    result.x = line.data.start.y;
                 }
             }
             return result
