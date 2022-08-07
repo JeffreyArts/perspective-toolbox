@@ -167,40 +167,46 @@ export default {
             } else {
                 center = cube.position.clone();
             }
-            const tmpCamera = three.camera.clone();
+
+            // Create vector for positioning the camera
+            const destination = new THREE.Vector3();
+
+            // Set center to the center of cube
+            center.y = 0.5;
+            
             switch (face) {
                 case "right":
-                    tmpCamera.position.set( center.x+8, center.y+1.6, center.z)
+                    destination.set( center.x+8, center.y+1.6, center.z)
                 break; case "left":
-                    tmpCamera.position.set( center.x-8, center.y+1.6, center.z)
+                    destination.set( center.x-8, center.y+1.6, center.z)
                 break;case "front":
-                    tmpCamera.position.set( center.x, center.y+1.6, center.z+8)
+                    destination.set( center.x, center.y+1.6, center.z+8)
                 break; case "back":
-                    tmpCamera.position.set( center.x, center.y+1.6, center.z-8)
+                    destination.set( center.x, center.y+1.6, center.z-8)
                 break;
                 default: 
-                    tmpCamera.position.set( center.x+8, center.y+8, center.z+ 8)
+                    destination.set( center.x+8, center.y+8, center.z+ 8)
             }
-            tmpCamera.lookAt( center.x, center.y, center.z)
-
-            new TWEEN.Tween( three.camera.quaternion)   
-                .to( tmpCamera.quaternion, this.transitionDuration )
-                .easing( this.transitionTypes[this.transitionType] )
-                .start( );
             
-            new TWEEN.Tween( three.camera.position)   
-                .to( tmpCamera.position, this.transitionDuration )
-                .easing( this.transitionTypes[this.transitionType] )
-                .start( )
+            
+            var tween = new TWEEN.Tween( three.camera.position)   
+                .to( destination, this.transitionDuration )
+                .easing( TWEEN.Easing.Sinusoidal.In )
+                .onUpdate(() => {
+                    three.camera.lookAt( center.x, center.y, center.z);
+                    three.controls.update();
+                    if (this.mouseDown) {
+                        tween.stop();
+                    }
+                })
+                .start()
 
             new TWEEN.Tween( three.controls.target)   
                 .to( center, this.transitionDuration )
-                .easing( this.transitionTypes[this.transitionType] )
-                .start( )
+                .easing( TWEEN.Easing.Sinusoidal.In )
+                .start()
                 .onComplete(() => {
-                    three.controls.update();
-                } );
-                
+                });  
         },
         createCube(cp) {
             var group = new THREE.Group();

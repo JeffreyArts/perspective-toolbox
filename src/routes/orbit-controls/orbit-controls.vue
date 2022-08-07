@@ -233,6 +233,7 @@ export default {
                 .easing( TWEEN.Easing.Sinusoidal.In )
                 .onUpdate(() => {
                     three.camera.lookAt( center.x, center.y, center.z);
+                    three.controls.update();
                     if (this.mouseDown) {
                         tween.stop();
                     }
@@ -245,8 +246,7 @@ export default {
                 .start()
                 .onComplete(() => {
                     three.controls.update();
-                });
-                
+                });  
         },
         createGroundplane() {
             const geometry = new THREE.PlaneGeometry( 320, 320 ); // update with height/width of image
