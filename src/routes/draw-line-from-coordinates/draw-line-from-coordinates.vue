@@ -22,8 +22,8 @@
                             Start
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line1" v-model="line1.start.x" step="1" min="0" max="16" @change="updateLine('line1', animateLines)">&nbsp;
-                            y: <input type="number" id="line1" v-model="line1.start.y" step="1" min="0" max="16" @change="updateLine('line1', animateLines)">
+                            x: <input type="number" id="line1" v-model="line1.start.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
+                            y: <input type="number" id="line1" v-model="line1.start.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
                         </div>
                     </div>
                     <div class="option">
@@ -31,8 +31,8 @@
                             End
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line1" v-model="line1.end.x" step="1" min="0" max="16" @change="updateLine('line1', animateLines)">&nbsp;
-                            y: <input type="number" id="line1" v-model="line1.end.y" step="1" min="0" max="16" @change="updateLine('line1', animateLines)">
+                            x: <input type="number" id="line1" v-model="line1.end.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
+                            y: <input type="number" id="line1" v-model="line1.end.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
                         </div>
                     </div>
                     <div class="option">
@@ -40,7 +40,7 @@
                             Side
                         </label>
                         <div class="group">
-                            <select name="line1side" v-model="line1.side" @change="updateLine('line1', animateLines)">
+                            <select name="line1side" v-model="line1.side" @change="updateLines( animateLines )">
                                 <option v-for="(side, index) in sides" :value="side">{{side}}</option>
                             </select>
                         </div>
@@ -54,8 +54,8 @@
                             Start
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line2" v-model="line2.start.x" step="1" min="0" max="16" @change="updateLine('line2', animateLines)">&nbsp;
-                            y: <input type="number" id="line2" v-model="line2.start.y" step="1" min="0" max="16" @change="updateLine('line2', animateLines)">
+                            x: <input type="number" id="line2" v-model="line2.start.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
+                            y: <input type="number" id="line2" v-model="line2.start.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
                         </div>
                     </div>
                     <div class="option">
@@ -63,8 +63,8 @@
                             End
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line2" v-model="line2.end.x" step="1" min="0" max="16" @change="updateLine('line2', animateLines)">&nbsp;
-                            y: <input type="number" id="line2" v-model="line2.end.y" step="1" min="0" max="16" @change="updateLine('line2', animateLines)">
+                            x: <input type="number" id="line2" v-model="line2.end.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
+                            y: <input type="number" id="line2" v-model="line2.end.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
                         </div>
                     </div>
                     <div class="option">
@@ -72,7 +72,7 @@
                             Side
                         </label>
                         <div class="group">
-                            <select name="line2side" v-model="line2.side" @change="updateLine('line2', animateLines)">
+                            <select name="line2side" v-model="line2.side" @change="updateLines( animateLines )">
                                 <option v-for="(side, index) in sides" :value="side">{{side}}</option>
                             </select>
                         </div>
@@ -112,9 +112,9 @@ import _ from 'lodash';
 import TWEEN from '@tweenjs/tween.js';
 import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
 import view from '../../services/3d-view.js';
+import Line from '../../services/line.js';
 
 var three = view.init({orbitControls: true})
-import degreesToRadians from '../../services/degrees-to-radians.js';
 
 
 export default {
@@ -244,164 +244,13 @@ export default {
                     
                 }
             }
-            // helperCube.material = ;
             three.scene.add(helperCube)
         },
-        createLine(line, cube) {
-            const geometry = new THREE.BoxGeometry(this.lineThickness,this.lineThickness,this.lineThickness);
-            
-            const mesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: line.color, wireframe: false}));
-            mesh.data = line;
-            return mesh
-        },
-        getLineRotation(line) {
-            var result = new THREE.Vector3();
-            var rotation = Math.random() < 0.5 ? 90 : -90;
-            if (line.data.side == 'left' || line.data.side == 'right') {
-                if (Math.abs(line.data.start.x - line.data.end.x)) {
-                    result.x = degreesToRadians(rotation);
-                    result.y = 0;
-                    result.z = 0;
-                } else {
-                    result.x = 0;
-                    result.y = 0;
-                    result.z = degreesToRadians(rotation);
-                }
-            } else if (line.data.side == 'front' || line.data.side == 'back') {
-                if (Math.abs(line.data.start.x - line.data.end.x)) {
-                    result.x = 0;
-                    result.y = degreesToRadians(rotation);
-                    result.z = 0;
-                } else {
-                    result.x = 0;
-                    result.y = 0;
-                    result.z = degreesToRadians(rotation);
-                }
-            } else if (line.data.side == 'bottom' || line.data.side == 'top') {
-                if (Math.abs(line.data.start.x - line.data.end.x)) {
-                    result.x = 0;
-                    result.y = degreesToRadians(rotation);
-                    result.z = 0;
-                } else {
-                    result.x = degreesToRadians(rotation);
-                    result.y = 0;
-                    result.z = 0;
-                }
-            }
-            return result;
-        },
-        getLineLength(line) {
-            var length = Math.abs(line.data.start.x - line.data.end.x);
-            
-            if (length === 0) {
-                length = Math.abs(line.data.start.y - line.data.end.y);
-            }
-            return length;
-        },
-        getLinePosition(line) {
-            var result = new THREE.Vector3();
-            if (line.data.side == 'right') {
-                result.z = this.cube.depth - 1
-                if (line.data.start.y > line.data.end.y) {
-                    result.x = line.data.start.x;
-                    result.y = line.data.end.y + line.data.length/2;
-                } else if (line.data.start.y < line.data.end.y) {
-                    result.x = line.data.start.x;
-                    result.y = line.data.start.y + line.data.length/2;
-                } else if (line.data.start.x > line.data.end.x) {
-                    result.x = line.data.end.x + line.data.length/2 
-                    result.y = line.data.start.y;
-                } else if (line.data.start.x < line.data.end.x) {
-                    result.x = line.data.start.x + line.data.length/2;
-                    result.y = line.data.start.y;
-                }
-            } else if (line.data.side == 'left') {
-                var startX = this.cube.width -1;
-                result.z = 0
-                if (line.data.start.y > line.data.end.y) {
-                    result.x = startX - line.data.start.x;
-                    result.y = line.data.end.y + line.data.length/2;
-                } else if (line.data.start.y < line.data.end.y) {
-                    result.x = startX - line.data.start.x;
-                    result.y = line.data.start.y + line.data.length/2;
-                } else if (line.data.start.x > line.data.end.x) {
-                    result.x = startX - line.data.end.x - line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
-                    result.y = line.data.start.y;
-                } else if (line.data.start.x < line.data.end.x) {
-                    result.x = startX - line.data.start.x - line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
-                    result.y = line.data.start.y;
-                }
-            } else if (line.data.side == 'front') {
-                result.x = 0
-                if (line.data.start.y > line.data.end.y) {
-                    result.z = line.data.start.x;
-                    result.y = line.data.end.y + line.data.length/2;
-                } else if (line.data.start.y < line.data.end.y) {
-                    result.z = line.data.start.x;
-                    result.y = line.data.start.y + line.data.length/2;
-                } else if (line.data.start.x > line.data.end.x) {
-                    result.z = line.data.end.x + line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
-                    result.y = line.data.start.y;
-                } else if (line.data.start.x < line.data.end.x) {
-                    result.z = line.data.start.x + line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
-                    result.y = line.data.start.y;
-                }
-            } else if (line.data.side == 'back') {
-                var startX =  this.cube.depth -1;
-                result.x = this.cube.width - 1 
-                if (line.data.start.y > line.data.end.y) {
-                    result.z = startX - line.data.start.x;
-                    result.y = line.data.end.y + line.data.length/2;
-                } else if (line.data.start.y < line.data.end.y) {
-                    result.z = startX - line.data.start.x;
-                    result.y = line.data.start.y + line.data.length/2;
-                } else if (line.data.start.x > line.data.end.x) {
-                    result.z = startX - line.data.end.x - line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
-                    result.y = line.data.start.y;
-                } else if (line.data.start.x < line.data.end.x) {
-                    result.z = startX - line.data.start.x - line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
-                    result.y = line.data.start.y;
-                }
-            } else if (line.data.side == 'bottom') {
-                result.y = 0;
-                var startX =  this.cube.width -1;
-                if (line.data.start.y > line.data.end.y) {
-                    result.z = startX - line.data.start.x;
-                    result.x = line.data.end.y + line.data.length/2;
-                } else if (line.data.start.y < line.data.end.y) {
-                    result.z = startX - line.data.start.x;
-                    result.x = line.data.start.y + line.data.length/2;
-                } else if (line.data.start.x > line.data.end.x) {
-                    result.z = startX - line.data.end.x - line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
-                    result.x = line.data.start.y;
-                } else if (line.data.start.x < line.data.end.x) {
-                    result.z = startX - line.data.start.x - line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
-                    result.x = line.data.start.y;
-                }
-            } else if (line.data.side == 'top') {
-                result.y = this.cube.height -1;
-                if (line.data.start.y > line.data.end.y) {
-                    result.z = line.data.start.x;
-                    result.x = line.data.end.y + line.data.length/2;
-                } else if (line.data.start.y < line.data.end.y) {
-                    result.z = line.data.start.x;
-                    result.x = line.data.start.y + line.data.length/2;
-                } else if (line.data.start.x > line.data.end.x) {
-                    result.z = line.data.end.x + line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
-                    result.x = line.data.start.y;
-                } else if (line.data.start.x < line.data.end.x) {
-                    result.z = line.data.start.x + line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
-                    result.x = line.data.start.y;
-                }
-            }
-            return result
-        },
-        updateLine(lineName, animateLines) {
-            //this[lineName]
+        updateLines(animateLines) {
             var cube = _.find(three.scene.children, {name: 'cube'});
             var scale = 1/this.lineThickness
             _.each(cube.children, line => {
-                line.data.length = this.getLineLength(line);
+                line.data.length = Line.getLength(line);
                 const scale = (line.data.length + this.lineThickness) * (1/this.lineThickness)
 
                 if (animateLines) {
@@ -411,18 +260,18 @@ export default {
                         .start()
 
                     new TWEEN.Tween( line.position )   
-                        .to( this.getLinePosition(line), this.transitionDuration )
+                        .to( Line.getPosition(line, this.cube), this.transitionDuration )
                         .easing( TWEEN.Easing.Sinusoidal.In )
                         .start()
 
                     new TWEEN.Tween( line.rotation )   
-                        .to( this.getLineRotation(line), this.transitionDuration )
+                        .to( Line.getRotation(line), this.transitionDuration )
                         .easing( TWEEN.Easing.Sinusoidal.In )
                         .start()
                 } else {
                     line.scale.x = scale;
-                    line.rotation.setFromVector3(this.getLineRotation(line));
-                    line.position.copy(this.getLinePosition(line));
+                    line.rotation.setFromVector3(Line.getRotation(line));
+                    line.position.copy(Line.getPosition(line, this.cube));
                 }
             });
         },
@@ -458,24 +307,19 @@ export default {
 
 
         // Create object
-        this.createHelperCube()
-        // var geometry = new THREE.BoxGeometry(1,1,1);
-        // this.mesh = new THREE.Mesh(geometry);
-        // three.scene.add(this.mesh);
-        // this.toggleWireframe();
+        this.createHelperCube();
+        
         const cube = new THREE.Group();
         cube.name = 'cube';
         three.scene.add(cube);
 
-        const line1 = this.createLine(this.line1, cube)
-        const line2 = this.createLine(this.line2, cube)
-        // const line1Mesh = new THREE.Mesh(line1Geometry, new THREE.MeshLambertMaterial({color: "#60f", wireframe: false}))
-        //         line1Mesh.name = 'line1'
-        // line1Mesh.name = 'line1'
+        const line1 = Line.create(this.line1, this.lineThickness)
+        const line2 = Line.create(this.line2, this.lineThickness)
+        
         cube.add(line1);
         cube.add(line2);
-        this.updateLine("line1", cube)
-        this.updateLine("line2", cube)
+        
+        this.updateLines(false)
 
 
         three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
