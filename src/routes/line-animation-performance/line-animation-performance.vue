@@ -2,7 +2,7 @@
 
     <div class="line-animation-performance">
         <header class="title">
-            <h1>Draw line from coordinates</h1>
+            <h1>Line animation performance test</h1>
         </header>
 
         <hr>
@@ -25,7 +25,7 @@
                         <label for="far">
                             Amount of Lines
                         </label>
-                        <input type="range" id="far" v-model.number="amountOfLines" step="1" min="1" max="480" @change="createLines()">
+                        <input type="range" id="far" v-model.number="amountOfLines" step="1" min="1" max="640" @change="createLines()">
                         <input type="number"  min="1" max="16" v-model.number="amountOfLines" @change="createLines()">
                     </div>
 
@@ -71,14 +71,7 @@
                             </label>
                         </span>
                     </div>
-                    <div class="option">
-                        <span>
-                            <input type="checkbox" id="checkbox-v1" v-model="animateLines">
-                            <label for="checkbox-v1">
-                                Animate lines
-                            </label>
-                        </span>
-                    </div>
+                   
                 </div>
 
             </div>
@@ -104,7 +97,6 @@ export default {
     data() {
         return {
             animation: true,
-            animateLines: true,
             transitionDuration: 1600,
             lineThickness: .25,
             helperCubeVisibility: false,
@@ -338,7 +330,7 @@ export default {
                 }
             })
 
-            this.updateLines(this.animateLines)
+            this.updateLines(true)
         },
         createLines() {
             this.lines.length = 0;
@@ -354,7 +346,6 @@ export default {
                 }
             }
             
-            console.log(helperCube)
             if (helperCube) {
                 for (let i = helperCube.children.length - 1; i >= 0; i--) {
                     if(helperCube.children[i].type === "Mesh") {
@@ -363,7 +354,6 @@ export default {
                         helperCube.remove(helperCube.children[i]);
                     }
                 }
-                console.log(helperCube.children.length)
             }
 
                 
@@ -419,6 +409,8 @@ export default {
 
                 cube.add(Line.create(line, this.lineThickness));
             }
+
+            three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
             this.createHelperCube()
             this.updateLines()
         },
@@ -455,6 +447,7 @@ export default {
         
         this.createLines()
         this.updateLines(false)
+        this.toggleHelperCube()
 
 
         three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);

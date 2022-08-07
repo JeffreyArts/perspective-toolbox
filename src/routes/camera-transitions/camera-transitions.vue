@@ -206,6 +206,7 @@ export default {
                 .easing( TWEEN.Easing.Sinusoidal.In )
                 .start()
                 .onComplete(() => {
+                    three.controls.update();
                 });  
         },
         createCube(cp) {
