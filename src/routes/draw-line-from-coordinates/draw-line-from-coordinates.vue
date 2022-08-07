@@ -267,6 +267,16 @@ export default {
                     result.y = 0;
                     result.z = degreesToRadians(rotation);
                 }
+            } else if (line.data.side == 'front' || line.data.side == 'back') {
+                if (Math.abs(line.data.start.x - line.data.end.x)) {
+                    result.x = 0;
+                    result.y = degreesToRadians(rotation);
+                    result.z = 0;
+                } else {
+                    result.x = 0;
+                    result.y = 0;
+                    result.z = degreesToRadians(rotation);
+                }
             }
             return result;
         },
@@ -281,7 +291,7 @@ export default {
         getLinePosition(line) {
             var result = new THREE.Vector3();
             if (line.data.side == 'right') {
-                result.z = this.cube.width - 1
+                result.z = this.cube.depth - 1
                 if (line.data.start.y > line.data.end.y) {
                     result.x = line.data.start.x;
                     result.y = line.data.end.y + line.data.length/2;
@@ -296,7 +306,7 @@ export default {
                     result.y = line.data.start.y;
                 }
             } else if (line.data.side == 'left') {
-                var startX = this.cube.depth -1;
+                var startX = this.cube.width -1;
                 result.z = 0
                 if (line.data.start.y > line.data.end.y) {
                     result.x = startX - line.data.start.x;
@@ -311,7 +321,38 @@ export default {
                     result.x = startX - line.data.start.x - line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
                     result.y = line.data.start.y;
                 }
-                // result.x = line.position.x; // Mirror face
+            } else if (line.data.side == 'front') {
+                var startX = 0;
+                result.x = 0
+                if (line.data.start.y > line.data.end.y) {
+                    result.z = line.data.start.x;
+                    result.y = line.data.end.y + line.data.length/2;
+                } else if (line.data.start.y < line.data.end.y) {
+                    result.z = line.data.start.x;
+                    result.y = line.data.start.y + line.data.length/2;
+                } else if (line.data.start.x > line.data.end.x) {
+                    result.z = line.data.end.x + line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
+                    result.y = line.data.start.y;
+                } else if (line.data.start.x < line.data.end.x) {
+                    result.z = line.data.start.x + line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
+                    result.y = line.data.start.y;
+                }
+            } else if (line.data.side == 'back') {
+                var startX =  this.cube.depth -1;
+                result.x = this.cube.width - 1 
+                if (line.data.start.y > line.data.end.y) {
+                    result.z = startX - line.data.start.x;
+                    result.y = line.data.end.y + line.data.length/2;
+                } else if (line.data.start.y < line.data.end.y) {
+                    result.z = startX - line.data.start.x;
+                    result.y = line.data.start.y + line.data.length/2;
+                } else if (line.data.start.x > line.data.end.x) {
+                    result.z = startX - line.data.end.x - line.data.length/2; // for non-mirrored version: line.data.end.x + line.data.length/2; 
+                    result.y = line.data.start.y;
+                } else if (line.data.start.x < line.data.end.x) {
+                    result.z = startX - line.data.start.x - line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
+                    result.y = line.data.start.y;
+                }
             }
             return result
         },
