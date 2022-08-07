@@ -135,12 +135,12 @@ export default {
             },
             line1: {
                 start: {
-                    x: 0,
+                    x: 1,
                     y: 0,
                 },
                 end: {
-                    x: 0,
-                    y: 1,
+                    x: 1,
+                    y: 4,
                 },
                 color:'#f06',
                 side: "left"
@@ -297,12 +297,12 @@ export default {
         }
         // Everything below will only be added the first time that this component is mounted
 
-
-        // Set camera
-        three.camera.position.z = 8
-        three.camera.position.y = 8
-        three.camera.position.x = 8
-        three.camera.lookAt(0,0,0)
+        
+        // Set camera in front position
+        three.camera.position.z = this.cube.depth/2
+        three.camera.position.y = this.cube.height*4
+        three.camera.position.x = this.cube.width/2
+        three.camera.lookAt(this.cube.width/2, this.cube.height/2, this.cube.depth/2)
         three.scene.add(three.camera)
 
 

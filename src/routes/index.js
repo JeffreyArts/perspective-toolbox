@@ -7,6 +7,7 @@ import CreateTriangle from "./create-triangle/create-triangle.vue";
 import ConvexGeometry from "./convex-geometry/convex-geometry.vue";
 import DepthOfField from "./depth-of-field/depth-of-field.vue";
 import DrawLineFromCoordinates from "./draw-line-from-coordinates/draw-line-from-coordinates.vue";
+import LineAnimationPerformance from "./line-animation-performance/line-animation-performance.vue";
 import TextToThreeJS from "./text-to-threejs/text-to-threejs.vue";
 import Tube from "./tube/tube.vue";
 import TubesAnimated from "./tubes-animated/tubes-animated.vue";
@@ -48,6 +49,11 @@ const routes = [
     path: "/draw-line-from-coordinates",
     name: "Draw line from coordinates",
     component: DrawLineFromCoordinates,
+  },
+  {
+    path: "/line-animation-performance",
+    name: "Line animation performance",
+    component: LineAnimationPerformance,
   },
   {
     path: "/orbit-controls",
