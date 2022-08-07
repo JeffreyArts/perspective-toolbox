@@ -340,7 +340,7 @@ export default {
                         .start()
                 } else {
                     line.scale.x = scale;
-                    line.rotation.copy(this.getLineRotation(line));
+                    line.rotation.setFromVector3(this.getLineRotation(line));
                     line.position.copy(this.getLinePosition(line));
                 }
             });
