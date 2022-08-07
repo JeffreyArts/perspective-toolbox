@@ -206,48 +206,46 @@ export default {
             } else {
                 center = cube.position.clone();
             }
+
+            // Create vector for positioning the camera
+            const destination = new THREE.Vector3();
+
+            // Set center to the center of cube
             center.y = 0.5;
-            const tmpCamera = three.camera.clone();
+            
             switch (face) {
                 case "right":
-                    tmpCamera.position.set( center.x+8, center.y+1.6, center.z)
+                    destination.set( center.x+8, center.y+1.6, center.z)
                 break; case "left":
-                    tmpCamera.position.set( center.x-8, center.y+1.6, center.z)
+                    destination.set( center.x-8, center.y+1.6, center.z)
                 break;case "front":
-                    tmpCamera.position.set( center.x, center.y+1.6, center.z+8)
+                    destination.set( center.x, center.y+1.6, center.z+8)
                 break; case "back":
-                    tmpCamera.position.set( center.x, center.y+1.6, center.z-8)
+                    destination.set( center.x, center.y+1.6, center.z-8)
                 break;
                 default: 
-                    tmpCamera.position.set( center.x+8, center.y+8, center.z+ 8)
+                    destination.set( center.x+8, center.y+8, center.z+ 8)
             }
-            tmpCamera.lookAt( center.x, center.y, center.z)
-
-            // if (three.camera.quaternion._w <= 0 ) {
-            //     console.log("SWITCH 1")
-            //     three.camera.quaternion._x = -three.camera.quaternion._x
-            //     three.camera.quaternion._y = -three.camera.quaternion._y
-            //     three.camera.quaternion._z = -three.camera.quaternion._z
-            //     three.camera.quaternion._w = Math.abs(three.camera.quaternion._w)
-            // }
-            console.log("start", three.camera.quaternion,"\r\n", "end",tmpCamera.quaternion)
-            new TWEEN.Tween( three.camera.quaternion)   
-                .to( tmpCamera.quaternion, this.transitionDuration )
-                .easing( TWEEN.Easing.Quartic.In )
-                .start( );
             
-            new TWEEN.Tween( three.camera.position)   
-                .to( tmpCamera.position, this.transitionDuration )
-                .easing( TWEEN.Easing.Quartic.In )
-                .start( )
+            
+            var tween = new TWEEN.Tween( three.camera.position)   
+                .to( destination, this.transitionDuration )
+                .easing( TWEEN.Easing.Sinusoidal.In )
+                .onUpdate(() => {
+                    three.camera.lookAt( center.x, center.y, center.z);
+                    if (this.mouseDown) {
+                        tween.stop();
+                    }
+                })
+                .start()
 
             new TWEEN.Tween( three.controls.target)   
                 .to( center, this.transitionDuration )
-                .easing( TWEEN.Easing.Quartic.In )
-                .start( )
+                .easing( TWEEN.Easing.Sinusoidal.In )
+                .start()
                 .onComplete(() => {
                     three.controls.update();
-                } );
+                });
                 
         },
         createGroundplane() {
