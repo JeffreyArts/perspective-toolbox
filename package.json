@@ -16,6 +16,7 @@
     "sass": "^1.34.1",
     "three": "^0.140.2",
     "three.interactive": "^1.4.0",
+    "visual-pattern-generator": "^1.2.4",
     "vue": "^3.2.25",
     "vue-router": "4"
   },

@@ -5,6 +5,7 @@ import CameraTransitions from "./camera-transitions/camera-transitions.vue";
 import CreateFace from "./create-face/create-face.vue";
 import CreateTriangle from "./create-triangle/create-triangle.vue";
 import ConvexGeometry from "./convex-geometry/convex-geometry.vue";
+import Cuboid from "./cuboid/cuboid.vue";
 import DepthOfField from "./depth-of-field/depth-of-field.vue";
 import DrawLineFromCoordinates from "./draw-line-from-coordinates/draw-line-from-coordinates.vue";
 import LineAnimationPerformance from "./line-animation-performance/line-animation-performance.vue";
@@ -39,6 +40,11 @@ const routes = [
     path: "/convex-geometry",
     name: "Convex geometry",
     component: ConvexGeometry,
+  },
+  {
+    path: "/cuboid",
+    name: "Cuboid",
+    component: Cuboid,
   },
   {
     path: "/depth-of-field",
