@@ -26,7 +26,22 @@ const Line  = {
         mesh.data = line;
         return mesh
     },
+    updateFromPolyline: (line) => {
+        line.data.start = {
+            x: line.data.polyline[0].x,
+            y: line.data.polyline[0].y
+        };
+
+        line.data.end = {
+            x: line.data.polyline[1].x,
+            y: line.data.polyline[1].y
+        };
+        delete line.data.polyline
+    },
     getLength: (line) => {
+        if (line.data.polyline) {
+            Line.updateFromPolyline(line)
+        }
         var length = Math.abs(line.data.start.x - line.data.end.x);
             
         if (length === 0) {
@@ -35,8 +50,13 @@ const Line  = {
         return length;
     },
     getRotation: (line) => {
+        if (line.data.polyline) {
+            Line.updateFromPolyline(line)
+        }
+
         var result = new THREE.Vector3();
-        var rotation = Math.random() < 0.5 ? 90 : -90;
+        var rotation = 90;
+        // var rotation = Math.random() < 0.5 ? 90 : -90;
         if (line.data.side == 'front' || line.data.side == 'back') {
             if (Math.abs(line.data.start.x - line.data.end.x)) {
                 result.x = degreesToRadians(rotation);
@@ -71,6 +91,9 @@ const Line  = {
         return result;
     },
     getPosition: (line, cube) => {
+        if (line.data.polyline) {
+            Line.updateFromPolyline(line)
+        }
         var result = new THREE.Vector3();
         if (line.data.side == 'front') {
             result.z = cube.depth - 1

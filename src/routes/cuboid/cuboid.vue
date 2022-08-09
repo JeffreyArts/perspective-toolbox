@@ -434,14 +434,7 @@ export default {
             _.each(this.polylines, (face, faceIndex) => {
                 _.each(face, polyline => {
                     const line = {
-                        start: {
-                            x: polyline[0].x,
-                            y: polyline[0].y,
-                        },
-                        end: {
-                            x: polyline[1].x,
-                            y: polyline[1].y,
-                        },
+                        polyline: polyline,
                         color: `#ff0066`,
                         side: faceIndex
                     };
