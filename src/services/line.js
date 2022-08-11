@@ -18,7 +18,7 @@ import degreesToRadians from './degrees-to-radians.js';
 const Line  = {
     create: (line, thickness) => {
         if (!line.color) {
-            line.color = "#000";
+            line.color = "#ffffff";
         }
 
         const geometry = new THREE.BoxGeometry(thickness,thickness,thickness);
@@ -55,8 +55,8 @@ const Line  = {
         }
 
         var result = new THREE.Vector3();
-        var rotation = 90;
-        // var rotation = Math.random() < 0.5 ? 90 : -90;
+        // var rotation = 90;
+        var rotation = Math.random() < 0.5 ? 90 : -90;
         if (line.data.side == 'front' || line.data.side == 'back') {
             if (Math.abs(line.data.start.x - line.data.end.x)) {
                 result.x = degreesToRadians(rotation);
@@ -89,6 +89,29 @@ const Line  = {
             }
         }
         return result;
+    },
+    getOrientation: (line) => {
+        var orientation = {
+            x: null,
+            y: null,
+            z: null
+        }
+        // orientation = true 
+        // when the direction of the line is in line with the axis
+        if (line.data.side == 'front' || line.data.side == 'back') {
+            orientation.x = line.data.start.x == line.data.end.x
+            orientation.y = line.data.start.y == line.data.end.y
+            orientation.z = false;
+        } else if (line.data.side == 'left' || line.data.side == 'right') {
+            orientation.x = false
+            orientation.y = line.data.start.y == line.data.end.y
+            orientation.z = line.data.start.x == line.data.end.x;
+        } else if (line.data.side == 'bottom' || line.data.side == 'top') {
+            orientation.x = line.data.start.x == line.data.end.x;
+            orientation.y = false
+            orientation.z = line.data.start.y == line.data.end.y;
+        }
+        return orientation
     },
     getPosition: (line, cube) => {
         if (line.data.polyline) {

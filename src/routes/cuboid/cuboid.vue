@@ -316,10 +316,13 @@ export default {
             }
         },
         updateLines(animateLines) {
-            var cube = _.find(three.scene.children, {name: 'cube'});
-            
+            const cube = _.find(three.scene.children, {name: 'cube'});
+            const delay = 0;
+
             _.each(cube.children, (line, lineIndex) => {
                 line.data.length = Line.getLength(line);
+                line.data.orientation = Line.getOrientation(line);
+                line.data.position = Line.getPosition(line, this.cube);
                 const scale = (line.data.length + this.lineThickness) * (1/this.lineThickness)
 
                 if (animateLines) {
@@ -331,7 +334,7 @@ export default {
                             .start()
 
                         new TWEEN.Tween( line.position )   
-                            .to( Line.getPosition(line, this.cube), this.transitionDuration )
+                            .to( line.data.position, this.transitionDuration )
                             .easing( this.transitionTypes[this.transitionType] )
                             .start()
 
@@ -339,11 +342,25 @@ export default {
                             .to( Line.getRotation(line), this.transitionDuration )
                             .easing( this.transitionTypes[this.transitionType] )
                             .start()
-                    })
+                            
+                            // This could be used, but no idea yet what for
+                            // new TWEEN.Tween( {index: lineIndex} )   
+                            // .to( {index: lineIndex}, this.transitionDuration )
+                            // .easing( this.transitionTypes[this.transitionType] )
+                            // .start()
+                            // .onComplete(lineIndex => {
+                            //     if (lineIndex.index == cube.children.length -1) {
+                            //         this.firstBuild = false   
+                            //     }
+                            //     console.log( cube.children.length -1,  lineIndex.index );
+                            //     cube.children[lineIndex.index].visible = true
+                            // })
+                        
+                    }, lineIndex * delay)
                 } else {
                     line.scale.x = scale;
                     line.rotation.setFromVector3(Line.getRotation(line));
-                    line.position.copy(Line.getPosition(line, this.cube));
+                    line.position.copy( line.data.position);
                 }
             });
         },
@@ -364,24 +381,6 @@ export default {
             })
 
             this.updateLines(true)
-        },
-        addFace(cube, polylines, side) {
-            _.each(polylines, polyline => {
-                const line = {
-                    start: {
-                        x: polyline[0].x,
-                        y: polyline[0].y,
-                    },
-                    end: {
-                        x: polyline[1].x,
-                        y: polyline[1].y,
-                    },
-                    color: `#ff0066`,
-                    side: side
-                };
-
-                cube.add(Line.create(line, this.lineThickness));
-            })
         },
         createCuboid() {
             this.lines.length = 0;
@@ -422,30 +421,34 @@ export default {
                 });
 
                 var polylines = PolylineAlgorithm(query).polylines;
-                this.polylines.front = polylines;
-                this.polylines.back = polylines;
-                this.polylines.top = polylines;
-                this.polylines.bottom = polylines;
-                this.polylines.left = polylines;
-                this.polylines.right = polylines;
+                this.polylines.front = _.cloneDeep(polylines);
+                this.polylines.back = _.cloneDeep(polylines);
+                this.polylines.top = _.cloneDeep(polylines);
+                this.polylines.bottom = _.cloneDeep(polylines);
+                this.polylines.left = _.cloneDeep(polylines);
+                this.polylines.right = _.cloneDeep(polylines);
             }
 
-            
             _.each(this.polylines, (face, faceIndex) => {
                 _.each(face, polyline => {
                     const line = {
                         polyline: polyline,
                         color: `#ff0066`,
-                        side: faceIndex
+                        side: faceIndex,
+                        orientation: {
+                            x: null,
+                            y: null,
+                            z: null
+                        }
                     };
-
                     cube.add(Line.create(line, this.lineThickness));
                 })
             })
 
             three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
-            this.createHelperCube()
-            this.updateLines()
+            this.createHelperCube();
+            this.updateLines();
+
         },
         toggleHelperCube() {
             var helperCube = _.find(three.scene.children, {name:"helper-cube"});
