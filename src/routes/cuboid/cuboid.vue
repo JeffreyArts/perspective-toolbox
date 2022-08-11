@@ -149,7 +149,7 @@ export default {
             transitionDuration: 1600,
             lineThickness: .25,
             helperCubeVisibility: true,
-            delay: 32,
+            delay: 0,
             seed: Math.floor(Math.random()*9000+1000).toString(),
             // seed: "1234",
             sensitivity: "abstract",
@@ -262,19 +262,33 @@ export default {
 
             camera.updateProjectionMatrix();
         },
+        updateLine(line) {
+        },
         updateThickness() {
             var cube = _.find(three.scene.children, {name: 'cube'});
-           _.each(this.cuboidLines, cuboidLine => {
-                cuboidLine.data.length = Line.getLength(cuboidLine)
+            _.each(this.cuboidLines, (cuboidLine, lineIndex) => {
+                // var newLine = Line.create(_.merge({},cuboidLine, cuboidLine.data, {thickness: this.lineThickness}), this.cube);
                 cuboidLine.data.thickness = this.lineThickness
-                cuboidLine.scale.x = (cuboidLine.data.length + cuboidLine.data.thickness) * (1/cuboidLine.data.thickness);
-           })
-           _.each(cube.children, line => {
-               line.data.length = Line.getLength(line)
-               line.data.thickness = this.lineThickness
-               line.scale.x = (line.data.length + line.data.thickness) * (1/line.data.thickness);
-           })
-           this.updateLines(0)
+                cuboidLine.data.length = Line.getLength(cuboidLine)
+                var newScale = Line.getScale(cuboidLine)
+                // cuboidLine.scale.copy( newLine.scale );
+
+                new TWEEN.Tween( cube.children[lineIndex].scale  )   
+                    .to( newScale, this.transitionDuration )
+                    .easing( this.transitionTypes[this.transitionType] )
+                    .start()
+            })
+
+            // _.each(cube.children, (line, lineIndex) => {
+            //     var newLine = Line.create(_.merge({},line, line.data, {thickness: this.lineThickness}), this.cube);
+            //     // line.scale.copy( newLine.scale );
+
+            //     //    line.data.length = Line.getLength(line)
+            //     //    line.data.thickness = this.lineThickness
+            //     //    line.scale.x = (line.data.length + line.data.thickness) * (1/line.data.thickness);
+
+            // })
+            // this.updateLines()
         },
         createHelperCube() {
 
@@ -376,7 +390,7 @@ export default {
         addSideToCuboidLines(query, side) {
             var line = null
             var polylines = PolylineAlgorithm(query).polylines;
-            const lineObject = {
+            const lineData = {
                 color:'#ff0066',
                 thickness: this.lineThickness,
                 length: 0,
@@ -388,11 +402,10 @@ export default {
 
             // Add Side
             _.each(polylines, polyline => {
-                line = Line.create(_.merge({}, lineObject, {polyline: polyline, side: side,  thickness: this.lineThickness}), this.cube);
-                const scale = (line.data.length + lineObject.thickness) * (1/lineObject.thickness)
-                line.scale.x = scale;
+                line = Line.create(_.merge({}, lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}), this.cube);
                 line.rotation.setFromVector3( line.data.rotation );
                 line.position.copy( line.data.position );
+                line.scale.copy( line.data.scale );
                 this.cuboidLines.push(line)
             })
         },
@@ -457,7 +470,7 @@ export default {
                 cube.remove(cube.children[i]);
             }
             
-            const lineObject = {
+            const lineData = {
                 start: {
                     x: 0,
                     y: 0,
@@ -476,12 +489,11 @@ export default {
             let line = null
 
             for (let index = 0; index < 512; index++) {
-                line = Line.create(lineObject, this.cube);
+                line = Line.create(lineData, this.cube);
                 cube.add(line);
-                const scale = (line.data.length + lineObject.thickness) * (1/lineObject.thickness)
-                line.scale.x = scale;
                 line.rotation.setFromVector3( line.data.rotation );
                 line.position.copy( line.data.position );
+                line.scale.copy( line.data.scale );
             }
 
             if (update) {

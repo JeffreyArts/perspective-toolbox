@@ -29,7 +29,7 @@ const Line  = {
             line.thickness = .25;
         }
 
-        const geometry = new THREE.BoxGeometry(line.thickness,line.thickness,line.thickness);
+        const geometry = new THREE.BoxGeometry(1,1,1);
         const lineObject = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: line.color, wireframe: false}));
         lineObject.data = line;
         lineObject.data.length = Line.getLength(lineObject);
@@ -54,7 +54,6 @@ const Line  = {
     getLength: (line) => {
         if (line.data.polyline) {
             Line.updateFromPolyline(line);
-            _.remove(line.data.polyline);
         }
         var length = Math.abs(line.data.start.x - line.data.end.x);
             
@@ -64,8 +63,8 @@ const Line  = {
         return length;
     },
     getScale: (line) => {
-        var result = new THREE.Vector3(line.data.thickness, line.data.thickness, line.data.thickness);
-        result.x = (line.data.length + line.data.thickness) * (1/line.data.thickness)
+        var result = new THREE.Vector3(line.data.thickness,line.data.thickness,line.data.thickness);
+        result.x = (line.data.length + line.data.thickness) * (1/line.data.thickness) * line.data.thickness
         return result;
     },
     getRotation: (line) => {
