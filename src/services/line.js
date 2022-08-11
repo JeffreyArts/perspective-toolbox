@@ -1,7 +1,8 @@
+import _ from 'lodash';
 import * as THREE from 'three';
 import degreesToRadians from './degrees-to-radians.js';
 
-/* line = object {
+/* lineObject = object {
     start: {
         x: 0,
         y: 0,
@@ -11,20 +12,32 @@ import degreesToRadians from './degrees-to-radians.js';
         y: 0,
     },
     color:'#60f',
-    side: "right"
+    side: "right",
+    thickness: .5,
+    length: 0
+    rotation: {},
+    position: {}
 }
 */
 
 const Line  = {
-    create: (line, thickness) => {
+    create: (line, cube) => {
         if (!line.color) {
             line.color = "#ffffff";
         }
+        if (!line.thickness) {
+            line.thickness = .25;
+        }
 
-        const geometry = new THREE.BoxGeometry(thickness,thickness,thickness);
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: line.color, wireframe: false}));
-        mesh.data = line;
-        return mesh
+        const geometry = new THREE.BoxGeometry(line.thickness,line.thickness,line.thickness);
+        const lineObject = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: line.color, wireframe: false}));
+        lineObject.data = line;
+        lineObject.data.length = Line.getLength(lineObject);
+        lineObject.data.position = Line.getPosition(lineObject, cube);
+        lineObject.data.scale = Line.getScale(lineObject);
+        lineObject.data.rotation = Line.getRotation(lineObject);
+        lineObject.visible = false;
+        return lineObject
     },
     updateFromPolyline: (line) => {
         line.data.start = {
@@ -40,7 +53,8 @@ const Line  = {
     },
     getLength: (line) => {
         if (line.data.polyline) {
-            Line.updateFromPolyline(line)
+            Line.updateFromPolyline(line);
+            _.remove(line.data.polyline);
         }
         var length = Math.abs(line.data.start.x - line.data.end.x);
             
@@ -48,6 +62,11 @@ const Line  = {
             length = Math.abs(line.data.start.y - line.data.end.y);
         }
         return length;
+    },
+    getScale: (line) => {
+        var result = new THREE.Vector3(line.data.thickness, line.data.thickness, line.data.thickness);
+        result.x = (line.data.length + line.data.thickness) * (1/line.data.thickness)
+        return result;
     },
     getRotation: (line) => {
         if (line.data.polyline) {
@@ -87,6 +106,10 @@ const Line  = {
                 result.y = degreesToRadians(rotation);
                 result.z = 0;
             }
+        } else {
+            result.x = 0;
+            result.y = 0;
+            result.z = 0;
         }
         return result;
     },
@@ -213,7 +236,12 @@ const Line  = {
                 result.x = line.data.start.x + line.data.length/2; // for non-mirrored version: line.data.start.x + line.data.length/2;
                 result.z = line.data.start.y;
             }
+        } else if (_.isObject(cube)) {
+            result.x = (cube.width-1)/2
+            result.y = (cube.height-1)/2
+            result.z = (cube.depth-1)/2
         }
+
         return result
     },
 }
