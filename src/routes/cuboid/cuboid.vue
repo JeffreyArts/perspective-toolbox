@@ -51,9 +51,9 @@
                         </label>
 
                         <div class="group">
-                            <input type="number" id="cubeWidth" v-model.number="cube.width" step="1" min="3" max="16" @change="createCuboid(true)">
-                            <input type="number" id="cubeHeight" v-model.number="cube.height" step="1" min="3" max="16" @change="createCuboid(true)">
-                            <input type="number" id="cubeDepth" v-model.number="cube.depth" step="1" min="3" max="16" @change="createCuboid(true)">
+                            <input type="number" id="cubeWidth" v-model.number="cube.width" step="1" min="3" max="16" @change="generateCuboid(true)">
+                            <input type="number" id="cubeHeight" v-model.number="cube.height" step="1" min="3" max="16" @change="generateCuboid(true)">
+                            <input type="number" id="cubeDepth" v-model.number="cube.depth" step="1" min="3" max="16" @change="generateCuboid(true)">
                         </div>
                     </div>
                     
@@ -299,6 +299,15 @@ export default {
                 three.scene.add(helperCube)
             }
 
+            for (let i = helperCube.children.length - 1; i >= 0; i--) {
+                if(helperCube.children[i].type === "Mesh") {
+                    helperCube.children[i].geometry.dispose();
+                    helperCube.children[i].material.dispose();
+                }
+                helperCube.remove(helperCube.children[i]);
+            }
+            
+
             let sphere = new THREE.Mesh(new THREE.SphereGeometry( 0.01, 32, 16 ), new THREE.MeshBasicMaterial({color: 0xcccccc, wireframe: true}));
             
             for (var x=0; x<this.cube.width; x++) {
@@ -409,7 +418,7 @@ export default {
                 this.cuboidLines.push(line)
             })
         },
-        generateCuboid(cube) {
+        generateCuboid(updateHelperCube) {
 
             this.cuboidLines.length = 0;            
 
@@ -443,10 +452,17 @@ export default {
                     width: this.cube.width, 
                     height: this.cube.depth,
                 });
-                this.addSideToCuboidLines(query, 'left')
-                this.addSideToCuboidLines(query, 'right')
                 this.addSideToCuboidLines(query, 'top')
                 this.addSideToCuboidLines(query, 'bottom')
+
+                
+                query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.depth, 
+                    height: this.cube.height,
+                });
+                this.addSideToCuboidLines(query, 'left')
+                this.addSideToCuboidLines(query, 'right')
             }
 
             // Remove duplicates
@@ -455,6 +471,10 @@ export default {
             });
 
             this.updateLines(this.delay)
+            if (updateHelperCube) {
+                this.createHelperCube()
+                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+            }
 
         },
         createCuboid(update = false) {
@@ -533,7 +553,7 @@ export default {
         this.createHelperCube()
         this.createCuboid()
 
-        this.generateCuboid(cube)
+        this.generateCuboid()
 
         this.toggleHelperCube()
 
