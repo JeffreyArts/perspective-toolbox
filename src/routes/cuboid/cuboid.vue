@@ -24,20 +24,20 @@
                     <div class="option">
                         <label for="transitionType">
                             Sensitivity
-                            <select name="transitionType" v-model="sensitivity" @change="createCuboid(true)">
-                                <option v-for="s in sensitivityScales" :value="s">{{s}}</option>
+                            <select name="transitionType" v-model="sensitivity" @change="updateQuery(sensitivity,true)">
+                                <option v-for="(s,i) in sensitivityScales" :value="s" :key="i">{{s}}</option>
                             </select>
                         </label>
                     </div>
                     <div class="option">
                         <label for="seed">
                             Seed
-                            <input type="number" id="seed" v-model="seed" @change="generateCuboid(true)">
+                            <input type="number" id="seed" v-model="seed" @change="updateSeed(true)">
                         </label>
                         <label for="delay">
                             Delay
-                            <input type="range" id="far" v-model.number="delay" step="1" min="0" max="500" @change="createCuboid(true)">
-                            <input type="number" step="1" min="0" max="1000" v-model.number="delay" @change="createCuboid(true)">
+                            <input type="range" id="far" v-model.number="delay" step="1" min="0" max="100" @change="createCuboid(true)">
+                            <input type="number" step="1" min="0" max="100" v-model.number="delay" @change="createCuboid(true)">
                         </label>
                     </div>
 
@@ -51,9 +51,9 @@
                         </label>
 
                         <div class="group">
-                            <input type="number" id="cubeWidth" v-model.number="cube.width" step="1" min="3" max="16" @change="generateCuboid(true)">
-                            <input type="number" id="cubeHeight" v-model.number="cube.height" step="1" min="3" max="16" @change="generateCuboid(true)">
-                            <input type="number" id="cubeDepth" v-model.number="cube.depth" step="1" min="3" max="16" @change="generateCuboid(true)">
+                            <input type="number" id="cubeWidth" v-model.number="cube.width" step="1" min="3" max="16" @change="createCuboid(true)">
+                            <input type="number" id="cubeHeight" v-model.number="cube.height" step="1" min="3" max="16" @change="createCuboid(true)">
+                            <input type="number" id="cubeDepth" v-model.number="cube.depth" step="1" min="3" max="16" @change="createCuboid(true)">
                         </div>
                     </div>
                     
@@ -160,6 +160,14 @@ export default {
                 depth: 5,
             },
             cuboidLines: [],
+            query: {
+                left: {},
+                right: {},
+                bottom: {},
+                top: {},
+                front: {},
+                back: {},
+            },
             transitionType: "Exponential.Out",
             transitionTypes: {
                 "Linear.None": TWEEN.Easing.Linear.None,
@@ -259,170 +267,21 @@ export default {
 
             let line = null
 
-            for (let index = 0; index < 512; index++) {
+            for (let index = 0; index < 1024; index++) {
                 line = Line.create(lineData, this.cube);
                 cube.add(line);
                 line.rotation.setFromVector3( line.data.rotation );
                 line.position.copy( line.data.position );
                 line.scale.copy( line.data.scale );
             }
-
+            
+            this.updateQuery();
             if (update) {
                 three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
                 this.createHelperCube()
+                this.generateCuboid()
                 this.updateLines(this.delay)
             }
-        },
-        addSideToCuboidLines(query, side) {
-            var line = null
-            var polylines = PolylineAlgorithm(query).polylines;
-            const lineData = {
-                color:'#ff0066',
-                thickness: this.lineThickness,
-                length: 0,
-                polyline: [],
-                scale: {},
-                rotation: {},
-                position: {}
-            };
-
-            // Add Side
-            _.each(polylines, polyline => {
-                line = Line.create(_.merge({}, lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}), this.cube);
-                line.rotation.setFromVector3( line.data.rotation );
-                line.position.copy( line.data.position );
-                line.scale.copy( line.data.scale );
-                this.cuboidLines.push(line)
-            })
-        },
-        generateCuboid(updateHelperCube) {
-            this.cuboidLines.length = 0;            
-
-            if (this.sensitivity == 'abstract') {
-                // this.cube.width = 5;
-                // this.cube.height = 5;
-                // this.cube.depth = 5;
-
-                
-                var query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.height,
-                });
-                // _.merge(query.algorithm, {
-                //     mirrorX: 1,
-                //     mirrorY: 1,
-                //     // mask: [
-                //     //     [1,0,0,0,1],
-                //     //     [0,0,0,0,0],
-                //     //     [0,0,0,0,0],
-                //     //     [0,0,0,0,0],
-                //     //     [1,0,0,0,1],
-                //     // ]
-                // });
-                this.addSideToCuboidLines(query, 'front')
-                this.addSideToCuboidLines(query, 'back')
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.depth,
-                });
-                this.addSideToCuboidLines(query, 'top')
-                this.addSideToCuboidLines(query, 'bottom')
-
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.depth, 
-                    height: this.cube.height
-                    ,
-                });
-                this.addSideToCuboidLines(query, 'left')
-                this.addSideToCuboidLines(query, 'right')
-            }
-
-            // Remove duplicates
-            this.cuboidLines = _.uniqBy(this.cuboidLines, (cl) => {
-                return `${cl.position.x}, ${cl.position.y}, ${cl.position.z}, ${cl.data.length}`;
-            });
-
-            this.updateLines(this.delay)
-            if (updateHelperCube) {
-                this.createHelperCube()
-                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
-            }
-
-        },
-        toggleHelperCube() {
-            var helperCube = _.find(three.scene.children, {name:"helper-cube"});
-            helperCube.visible = this.helperCubeVisibility
-        },
-        updateCanvasSize(camera, renderer) {
-            var width = this.$el.clientWidth;
-            var height = this.$el.clientWidth;
-
-            renderer.setSize( width, height);
-            camera.bottom = -height;
-            camera.top = height;
-            camera.left = -width;
-            camera.right = width;
-
-            camera.updateProjectionMatrix();
-        },
-        updateThickness() {
-            var cube = _.find(three.scene.children, {name: 'cube'});
-            _.each(this.cuboidLines, (cuboidLine, lineIndex) => {
-                // var newLine = Line.create(_.merge({},cuboidLine, cuboidLine.data, {thickness: this.lineThickness}), this.cube);
-                cuboidLine.data.thickness = this.lineThickness
-                cuboidLine.data.length = Line.getLength(cuboidLine)
-                var newScale = Line.getScale(cuboidLine)
-                // cuboidLine.scale.copy( newLine.scale );
-
-                new TWEEN.Tween( cube.children[lineIndex].scale  )   
-                    .to( newScale, this.transitionDuration )
-                    .easing( this.transitionTypes[this.transitionType] )
-                    .start()
-            });
-        },
-        updateLine(line) {
-        },
-        updateLines(delay = 16) {
-            const cube = _.find(three.scene.children, {name: 'cube'});
-            this.cuboidLines = _.shuffle(this.cuboidLines);
-
-            _.each(cube.children, (line, lineIndex) => {
-                if (!this.cuboidLines[lineIndex]) {
-                    line.visible = false;
-                    return
-                }
-
-                if (line.visible == false) {
-                    line.visible = true;
-                }
-
-                setTimeout(() => {
-                    new TWEEN.Tween( cube.children[lineIndex].scale  )   
-                        .to( this.cuboidLines[lineIndex].scale, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()
-
-                    new TWEEN.Tween( cube.children[lineIndex].position  )   
-                        .to( this.cuboidLines[lineIndex].position, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()                    
-
-                    new TWEEN.Tween(cube.children[lineIndex].rotation)   
-                        .to({
-                            x: this.cuboidLines[lineIndex].rotation.x,
-                            z: this.cuboidLines[lineIndex].rotation.z,
-                            y: this.cuboidLines[lineIndex].rotation.y
-                        }, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()
-                }, lineIndex * delay)
-                
-            });
         },
         createHelperCube() {
 
@@ -493,6 +352,314 @@ export default {
                 }
             }
         },
+        addSideToCuboidLines(query, side) {
+            var line = null
+            var polylines = PolylineAlgorithm(query).polylines;
+            const lineData = {
+                color:'#ff0066',
+                thickness: this.lineThickness,
+                length: 0,
+                polyline: [],
+                scale: {},
+                rotation: {},
+                position: {}
+            };
+
+            // Add Side
+            _.each(polylines, polyline => {
+                line = Line.create(_.merge({}, lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}), this.cube);
+                line.rotation.setFromVector3( line.data.rotation );
+                line.position.copy( line.data.position );
+                line.scale.copy( line.data.scale );
+                this.cuboidLines.push(line)
+            })
+        },
+        updateSeed() {
+            _.each(this.query, side => {
+                side.seed = this.seed;
+            })
+            // This will update the mask(s) of the query collection
+            // this.updateQuery(this.sensitivity)
+            this.generateCuboid()
+        },
+        updateQuery(sensitivity,update) {
+            
+            if (sensitivity == 'abstract') {
+                this.cube.width = 5;
+                this.cube.height = 5;
+                this.cube.depth = 5;
+                
+                query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.width, 
+                    height: this.cube.height,
+                });
+                var masks = [[
+                        [1,0,0,0,1],
+                        [0,0,0,0,0],
+                        [0,1,1,1,0],
+                        [0,0,0,0,0],
+                        [1,0,0,0,1],
+                    ], [
+                        [1,0,0,0,1],
+                        [0,0,0,0,0],
+                        [0,0,1,0,0],
+                        [0,0,0,0,0],
+                        [1,0,0,0,1],
+                    ]]
+                _.merge(query.algorithm, {
+                    mirrorX: 1,
+                    mirrorY: 1,
+                    mask: masks[Math.round(Math.random())]
+                });
+
+                this.query.left = _.merge({},query);
+                this.query.right = _.merge({},query);
+
+                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+
+                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+            } else if (sensitivity == 'non-identity') {
+                this.cube.width = 5;
+                this.cube.height = 5;
+                this.cube.depth = 5;
+                
+                query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.width, 
+                    height: this.cube.height,
+                });
+                _.merge(query.algorithm, {
+                    mirrorX: 1,
+                    mirrorY: 1,
+                    mask: null
+                });
+
+                this.query.left = _.merge({},query);
+                this.query.right = _.merge({},query);
+
+                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+
+                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+            } else if (sensitivity == 'identity') {
+                this.cube.width = 5;
+                this.cube.height = 5;
+                this.cube.depth = 5;
+                
+                query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.width, 
+                    height: this.cube.height,
+                });
+
+                _.merge(query.algorithm, {
+                    mirrorX: Math.round(Math.random()) + 1,
+                    mirrorY: 0,
+                    mask: null
+                });
+
+                this.query.left = _.merge({},query);
+                this.query.right = _.merge({},query);
+
+                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+
+
+                _.merge(query.algorithm, {
+                    mirrorX: 1,
+                    mirrorY: 1,
+                    mask: null
+                });
+
+                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+            } else if (sensitivity == 'open') {
+                this.cube.width = 7;
+                this.cube.height = 7;
+                this.cube.depth = 7;
+                
+                query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.width, 
+                    height: this.cube.height,
+                });
+
+                var masks = [[
+                        [1,0,0,0,0,0,1],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [1,0,0,0,0,0,1],
+                    ], [
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                    ], [
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,1,0,0,0],
+                        [0,0,1,1,1,0,0],
+                        [0,0,0,1,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                    ], [
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,1,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                    ], [
+                        [0,0,0,1,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [1,0,0,0,0,0,1],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0],
+                        [0,0,0,1,0,0,0],
+                    ]]
+                var index = Math.round(Math.random()*(masks.length - 1));
+                
+                _.merge(query.algorithm, {
+                    mirrorX: 1,
+                    mirrorY: 1,
+                    mask: masks[index]
+                });
+
+                this.query.left = _.merge({},query);
+                this.query.right = _.merge({},query);
+
+                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+
+                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+            } else  {
+                var query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.depth, 
+                    height: this.cube.height,
+                })
+                _.merge(query.algorithm, {
+                    mirrorX: 1,
+                    mirrorY: 1,
+                    mask: null
+                });
+
+                this.query.left = _.merge({},query);
+                this.query.right = _.merge({},query);
+
+                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth});
+
+                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height});
+            }
+
+            if (update) {
+                this.generateCuboid()
+            }
+        },
+        generateCuboid(updateHelperCube) {
+            this.cuboidLines.length = 0;            
+            _.each(this.query, (query, side) => {
+                this.addSideToCuboidLines(query, side)
+            })
+
+            // Remove duplicates
+            this.cuboidLines = _.uniqBy(this.cuboidLines, (cl) => {
+                return `${cl.position.x}, ${cl.position.y}, ${cl.position.z}, ${cl.data.length}`;
+            });
+
+            this.updateLines(this.delay)
+            if (updateHelperCube) {
+                this.createHelperCube()
+                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+            }
+
+        },
+        toggleHelperCube() {
+            var helperCube = _.find(three.scene.children, {name:"helper-cube"});
+            this.createHelperCube()
+            helperCube.visible = this.helperCubeVisibility
+        },
+        updateCanvasSize(camera, renderer) {
+            var width = this.$el.clientWidth;
+            var height = this.$el.clientWidth;
+
+            renderer.setSize( width, height);
+            camera.bottom = -height;
+            camera.top = height;
+            camera.left = -width;
+            camera.right = width;
+
+            camera.updateProjectionMatrix();
+        },
+        updateThickness() {
+            var cube = _.find(three.scene.children, {name: 'cube'});
+            _.each(this.cuboidLines, (cuboidLine, lineIndex) => {
+                // var newLine = Line.create(_.merge({},cuboidLine, cuboidLine.data, {thickness: this.lineThickness}), this.cube);
+                cuboidLine.data.thickness = this.lineThickness
+                cuboidLine.data.length = Line.getLength(cuboidLine)
+                var newScale = Line.getScale(cuboidLine)
+                // cuboidLine.scale.copy( newLine.scale );
+
+                new TWEEN.Tween( cube.children[lineIndex].scale  )   
+                    .to( newScale, this.transitionDuration )
+                    .easing( this.transitionTypes[this.transitionType] )
+                    .start()
+            });
+        },
+        updateLine(line) {
+        },
+        updateLines(delay = 16) {
+            const cube = _.find(three.scene.children, {name: 'cube'});
+            this.cuboidLines = _.shuffle(this.cuboidLines);
+
+            _.each(cube.children, (line, lineIndex) => {
+                if (!this.cuboidLines[lineIndex]) {
+                    line.visible = false;
+                    return
+                }
+
+                if (line.visible == false) {
+                    line.visible = true;
+                }
+
+                setTimeout(() => {
+                    new TWEEN.Tween( cube.children[lineIndex].scale  )   
+                        .to( this.cuboidLines[lineIndex].scale, this.transitionDuration )
+                        .easing( this.transitionTypes[this.transitionType] )
+                        .start()
+
+                    new TWEEN.Tween( cube.children[lineIndex].position  )   
+                        .to( this.cuboidLines[lineIndex].position, this.transitionDuration )
+                        .easing( this.transitionTypes[this.transitionType] )
+                        .start()                    
+
+                    new TWEEN.Tween(cube.children[lineIndex].rotation)   
+                        .to({
+                            x: this.cuboidLines[lineIndex].rotation.x,
+                            z: this.cuboidLines[lineIndex].rotation.z,
+                            y: this.cuboidLines[lineIndex].rotation.y
+                        }, this.transitionDuration )
+                        .easing( this.transitionTypes[this.transitionType] )
+                        .start()
+                }, lineIndex * delay)
+                
+            });
+        },
     },
     mounted() {
         this.init();
@@ -520,6 +687,7 @@ export default {
         this.createHelperCube()
         this.createCuboid()
 
+        this.updateQuery(this.sensitivity)
         this.generateCuboid()
 
         this.toggleHelperCube()
