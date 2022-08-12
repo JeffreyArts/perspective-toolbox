@@ -190,7 +190,7 @@ export default {
             _.each(this.cuboidLines, (cuboidLine, lineIndex) => {
                 cuboidLine.data.thickness = this.lineThickness
                 cuboidLine.data.length = Line.getLength(cuboidLine)
-                
+
                 new TWEEN.Tween( cube.children[lineIndex].scale  )   
                     .to( Line.getScale(cuboidLine), this.transitionDuration )
                     .easing( this.transitionTypes[this.transitionType] )
@@ -255,7 +255,7 @@ export default {
             }
 
             three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
-
+            three.camera.lookAt(three.controls.target)
             if (update) {
                 this.createLines(true)
             }
@@ -422,6 +422,7 @@ export default {
 
             if(update){
                 three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+                three.camera.lookAt(three.controls.target)
                 this.createHelperCube()
                 this.updateLines()
             }
@@ -463,6 +464,7 @@ export default {
 
 
         three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+        three.camera.lookAt(three.controls.target)
         three.scene.initialised = true;
     },
     unmounted() {

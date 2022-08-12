@@ -278,6 +278,7 @@ export default {
             this.updateQuery();
             if (update) {
                 three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+                three.camera.lookAt(three.controls.target)
                 this.createHelperCube()
                 this.generateCuboid()
                 this.updateLines(this.delay)
@@ -582,6 +583,7 @@ export default {
             if (updateHelperCube) {
                 this.createHelperCube()
                 three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+                three.camera.lookAt(three.controls.target)
             }
 
         },
@@ -690,6 +692,7 @@ export default {
 
 
         three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+        three.camera.lookAt(three.controls.target)
         three.scene.initialised = true;
     },
     unmounted() {
