@@ -61,7 +61,7 @@
                         <label for="transitionType">
                             Transition type
                             <select name="transitionType" v-model="transitionType" >
-                                <option v-for="(tween, index) in transitionTypes" :value="index">{{index}}</option>
+                                <option v-for="(tween, index) in transitionTypes" :value="index" :key="tween">{{index}}</option>
                             </select>
                         </label>
                     </div>
@@ -148,22 +148,18 @@ export default {
             animation: true,
             transitionDuration: 1600,
             lineThickness: .25,
-            helperCubeVisibility: true,
+            helperCubeVisibility: false,
             delay: 0,
             seed: Math.floor(Math.random()*9000+1000).toString(),
-            // seed: "1234",
             sensitivity: "abstract",
             sensitivityScales: ["abstract","non-identity","identity","open"],
             sides: ["left","right","front","back","top","bottom"],
-            cuboidLines: [],
-            polylines: {
-                bottom: [],
-                top: [],
-                left: [],
-                right: [],
-                front: [],
-                back: []
+            cube: {
+                width: 5,
+                height: 5,
+                depth: 5,
             },
+            cuboidLines: [],
             transitionType: "Exponential.Out",
             transitionTypes: {
                 "Linear.None": TWEEN.Easing.Linear.None,
@@ -197,24 +193,7 @@ export default {
                 "Bounce.In": TWEEN.Easing.Bounce.In,
                 "Bounce.Out": TWEEN.Easing.Bounce.Out,
                 "Bounce.InOut": TWEEN.Easing.Bounce.InOut,
-            },
-            cube: {
-                width: 5,
-                height: 5,
-                depth: 5,
-            },
-            lines: [{
-                start: {
-                    x: 0,
-                    y: 0,
-                },
-                end: {
-                    x: 0,
-                    y: 1,
-                },
-                color:'#f06',
-                side: "left"
-            }],
+            }
         }
     },
     methods: {
@@ -250,6 +229,135 @@ export default {
             window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
             window.dispatchEvent(new Event("resize"));
         },
+        createCuboid(update = false) {
+            const cube = _.find(three.scene.children, {name: 'cube'});
+
+            // Clean cube
+            for (let i = cube.children.length - 1; i >= 0; i--) {
+                if(cube.children[i].type === "Mesh") {
+                    cube.children[i].geometry.dispose();
+                    cube.children[i].material.dispose();
+                }
+                cube.remove(cube.children[i]);
+            }
+            
+            const lineData = {
+                start: {
+                    x: 0,
+                    y: 0,
+                },
+                end: {
+                    x: 0,
+                    y: 0,
+                },
+                color:'#ff0066',
+                thickness: this.lineThickness,
+                length: 0,
+                rotation: {},
+                position: {}
+            }
+
+            let line = null
+
+            for (let index = 0; index < 512; index++) {
+                line = Line.create(lineData, this.cube);
+                cube.add(line);
+                line.rotation.setFromVector3( line.data.rotation );
+                line.position.copy( line.data.position );
+                line.scale.copy( line.data.scale );
+            }
+
+            if (update) {
+                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+                this.createHelperCube()
+                this.updateLines(this.delay)
+            }
+        },
+        addSideToCuboidLines(query, side) {
+            var line = null
+            var polylines = PolylineAlgorithm(query).polylines;
+            const lineData = {
+                color:'#ff0066',
+                thickness: this.lineThickness,
+                length: 0,
+                polyline: [],
+                scale: {},
+                rotation: {},
+                position: {}
+            };
+
+            // Add Side
+            _.each(polylines, polyline => {
+                line = Line.create(_.merge({}, lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}), this.cube);
+                line.rotation.setFromVector3( line.data.rotation );
+                line.position.copy( line.data.position );
+                line.scale.copy( line.data.scale );
+                this.cuboidLines.push(line)
+            })
+        },
+        generateCuboid(updateHelperCube) {
+            this.cuboidLines.length = 0;            
+
+            if (this.sensitivity == 'abstract') {
+                // this.cube.width = 5;
+                // this.cube.height = 5;
+                // this.cube.depth = 5;
+
+                
+                var query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.width, 
+                    height: this.cube.height,
+                });
+                // _.merge(query.algorithm, {
+                //     mirrorX: 1,
+                //     mirrorY: 1,
+                //     // mask: [
+                //     //     [1,0,0,0,1],
+                //     //     [0,0,0,0,0],
+                //     //     [0,0,0,0,0],
+                //     //     [0,0,0,0,0],
+                //     //     [1,0,0,0,1],
+                //     // ]
+                // });
+                this.addSideToCuboidLines(query, 'front')
+                this.addSideToCuboidLines(query, 'back')
+                
+                query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.width, 
+                    height: this.cube.depth,
+                });
+                this.addSideToCuboidLines(query, 'top')
+                this.addSideToCuboidLines(query, 'bottom')
+
+                
+                query = _.merge({},algorithmConfig, {
+                    seed: this.seed, 
+                    width: this.cube.depth, 
+                    height: this.cube.height
+                    ,
+                });
+                this.addSideToCuboidLines(query, 'left')
+                this.addSideToCuboidLines(query, 'right')
+            }
+
+            // Remove duplicates
+            this.cuboidLines = _.uniqBy(this.cuboidLines, (cl) => {
+                return `${cl.position.x}, ${cl.position.y}, ${cl.position.z}, ${cl.data.length}`;
+            });
+
+            this.updateLines(this.delay)
+            if (updateHelperCube) {
+                this.createHelperCube()
+                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+            }
+
+        },
+        toggleHelperCube() {
+            var helperCube = _.find(three.scene.children, {name:"helper-cube"});
+            helperCube.visible = this.helperCubeVisibility
+        },
         updateCanvasSize(camera, renderer) {
             var width = this.$el.clientWidth;
             var height = this.$el.clientWidth;
@@ -261,8 +369,6 @@ export default {
             camera.right = width;
 
             camera.updateProjectionMatrix();
-        },
-        updateLine(line) {
         },
         updateThickness() {
             var cube = _.find(three.scene.children, {name: 'cube'});
@@ -277,18 +383,46 @@ export default {
                     .to( newScale, this.transitionDuration )
                     .easing( this.transitionTypes[this.transitionType] )
                     .start()
-            })
+            });
+        },
+        updateLine(line) {
+        },
+        updateLines(delay = 16) {
+            const cube = _.find(three.scene.children, {name: 'cube'});
+            this.cuboidLines = _.shuffle(this.cuboidLines);
 
-            // _.each(cube.children, (line, lineIndex) => {
-            //     var newLine = Line.create(_.merge({},line, line.data, {thickness: this.lineThickness}), this.cube);
-            //     // line.scale.copy( newLine.scale );
+            _.each(cube.children, (line, lineIndex) => {
+                if (!this.cuboidLines[lineIndex]) {
+                    line.visible = false;
+                    return
+                }
 
-            //     //    line.data.length = Line.getLength(line)
-            //     //    line.data.thickness = this.lineThickness
-            //     //    line.scale.x = (line.data.length + line.data.thickness) * (1/line.data.thickness);
+                if (line.visible == false) {
+                    line.visible = true;
+                }
 
-            // })
-            // this.updateLines()
+                setTimeout(() => {
+                    new TWEEN.Tween( cube.children[lineIndex].scale  )   
+                        .to( this.cuboidLines[lineIndex].scale, this.transitionDuration )
+                        .easing( this.transitionTypes[this.transitionType] )
+                        .start()
+
+                    new TWEEN.Tween( cube.children[lineIndex].position  )   
+                        .to( this.cuboidLines[lineIndex].position, this.transitionDuration )
+                        .easing( this.transitionTypes[this.transitionType] )
+                        .start()                    
+
+                    new TWEEN.Tween(cube.children[lineIndex].rotation)   
+                        .to({
+                            x: this.cuboidLines[lineIndex].rotation.x,
+                            z: this.cuboidLines[lineIndex].rotation.z,
+                            y: this.cuboidLines[lineIndex].rotation.y
+                        }, this.transitionDuration )
+                        .easing( this.transitionTypes[this.transitionType] )
+                        .start()
+                }, lineIndex * delay)
+                
+            });
         },
         createHelperCube() {
 
@@ -358,173 +492,6 @@ export default {
                     helperCube.add(sphere.clone());
                 }
             }
-        },
-        updateLines(delay = 16) {
-            const cube = _.find(three.scene.children, {name: 'cube'});
-            this.cuboidLines = _.shuffle(this.cuboidLines);
-
-            _.each(cube.children, (line, lineIndex) => {
-                if (!this.cuboidLines[lineIndex]) {
-                    line.visible = false;
-                    return
-                }
-
-                if (line.visible == false) {
-                    line.visible = true;
-                }
-
-                setTimeout(() => {
-                    new TWEEN.Tween( cube.children[lineIndex].scale  )   
-                        .to( this.cuboidLines[lineIndex].scale, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()
-
-                    new TWEEN.Tween( cube.children[lineIndex].position  )   
-                        .to( this.cuboidLines[lineIndex].position, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()                    
-
-                    new TWEEN.Tween(cube.children[lineIndex].rotation)   
-                        .to({
-                            x: this.cuboidLines[lineIndex].rotation.x,
-                            z: this.cuboidLines[lineIndex].rotation.z,
-                            y: this.cuboidLines[lineIndex].rotation.y
-                        }, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()
-                }, lineIndex * delay)
-                
-            });
-        },
-        addSideToCuboidLines(query, side) {
-            var line = null
-            var polylines = PolylineAlgorithm(query).polylines;
-            const lineData = {
-                color:'#ff0066',
-                thickness: this.lineThickness,
-                length: 0,
-                polyline: [],
-                scale: {},
-                rotation: {},
-                position: {}
-            };
-
-            // Add Side
-            _.each(polylines, polyline => {
-                line = Line.create(_.merge({}, lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}), this.cube);
-                line.rotation.setFromVector3( line.data.rotation );
-                line.position.copy( line.data.position );
-                line.scale.copy( line.data.scale );
-                this.cuboidLines.push(line)
-            })
-        },
-        generateCuboid(updateHelperCube) {
-
-            this.cuboidLines.length = 0;            
-
-            if (this.sensitivity == 'abstract') {
-                // this.cube.width = 5;
-                // this.cube.height = 5;
-                // this.cube.depth = 5;
-
-                
-                var query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.height,
-                });
-                // _.merge(query.algorithm, {
-                //     mirrorX: 1,
-                //     mirrorY: 1,
-                //     // mask: [
-                //     //     [1,0,0,0,1],
-                //     //     [0,0,0,0,0],
-                //     //     [0,0,0,0,0],
-                //     //     [0,0,0,0,0],
-                //     //     [1,0,0,0,1],
-                //     // ]
-                // });
-                this.addSideToCuboidLines(query, 'front')
-                this.addSideToCuboidLines(query, 'back')
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.depth,
-                });
-                this.addSideToCuboidLines(query, 'top')
-                this.addSideToCuboidLines(query, 'bottom')
-
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.depth, 
-                    height: this.cube.height,
-                });
-                this.addSideToCuboidLines(query, 'left')
-                this.addSideToCuboidLines(query, 'right')
-            }
-
-            // Remove duplicates
-            this.cuboidLines = _.uniqBy(this.cuboidLines, (cl) => {
-                return `${cl.position.x}, ${cl.position.y}, ${cl.position.z}, ${cl.data.length}`;
-            });
-
-            this.updateLines(this.delay)
-            if (updateHelperCube) {
-                this.createHelperCube()
-                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
-            }
-
-        },
-        createCuboid(update = false) {
-            this.lines.length = 0;
-            const cube = _.find(three.scene.children, {name: 'cube'});
-
-            // Clean cube
-            for (let i = cube.children.length - 1; i >= 0; i--) {
-                if(cube.children[i].type === "Mesh") {
-                    cube.children[i].geometry.dispose();
-                    cube.children[i].material.dispose();
-                }
-                cube.remove(cube.children[i]);
-            }
-            
-            const lineData = {
-                start: {
-                    x: 0,
-                    y: 0,
-                },
-                end: {
-                    x: 0,
-                    y: 0,
-                },
-                color:'#ff0066',
-                thickness: this.lineThickness,
-                length: 0,
-                rotation: {},
-                position: {}
-            }
-
-            let line = null
-
-            for (let index = 0; index < 512; index++) {
-                line = Line.create(lineData, this.cube);
-                cube.add(line);
-                line.rotation.setFromVector3( line.data.rotation );
-                line.position.copy( line.data.position );
-                line.scale.copy( line.data.scale );
-            }
-
-            if (update) {
-                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
-                this.createHelperCube()
-                this.updateLines(this.delay)
-            }
-        },
-        toggleHelperCube() {
-            var helperCube = _.find(three.scene.children, {name:"helper-cube"});
-            helperCube.visible = this.helperCubeVisibility
         },
     },
     mounted() {
