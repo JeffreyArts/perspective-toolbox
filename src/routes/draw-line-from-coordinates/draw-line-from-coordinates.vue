@@ -22,8 +22,8 @@
                             Start
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line1" v-model="line1.start.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
-                            y: <input type="number" id="line1" v-model="line1.start.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
+                            x: <input type="number" id="line1" v-model="line1.start.x" step="1" min="0" max="16" @change="updateLines( )">&nbsp;
+                            y: <input type="number" id="line1" v-model="line1.start.y" step="1" min="0" max="16" @change="updateLines( )">
                         </div>
                     </div>
                     <div class="option">
@@ -31,8 +31,8 @@
                             End
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line1" v-model="line1.end.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
-                            y: <input type="number" id="line1" v-model="line1.end.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
+                            x: <input type="number" id="line1" v-model="line1.end.x" step="1" min="0" max="16" @change="updateLines( )">&nbsp;
+                            y: <input type="number" id="line1" v-model="line1.end.y" step="1" min="0" max="16" @change="updateLines( )">
                         </div>
                     </div>
                     <div class="option">
@@ -40,7 +40,7 @@
                             Side
                         </label>
                         <div class="group">
-                            <select name="line1side" v-model="line1.side" @change="updateLines( animateLines )">
+                            <select name="line1side" v-model="line1.side" @change="updateLines( )">
                                 <option v-for="(side, index) in sides" :value="side">{{side}}</option>
                             </select>
                         </div>
@@ -54,8 +54,8 @@
                             Start
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line2" v-model="line2.start.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
-                            y: <input type="number" id="line2" v-model="line2.start.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
+                            x: <input type="number" id="line2" v-model="line2.start.x" step="1" min="0" max="16" @change="updateLines( )">&nbsp;
+                            y: <input type="number" id="line2" v-model="line2.start.y" step="1" min="0" max="16" @change="updateLines( )">
                         </div>
                     </div>
                     <div class="option">
@@ -63,8 +63,8 @@
                             End
                         </label>
                         <div class="group">
-                            x: <input type="number" id="line2" v-model="line2.end.x" step="1" min="0" max="16" @change="updateLines( animateLines )">&nbsp;
-                            y: <input type="number" id="line2" v-model="line2.end.y" step="1" min="0" max="16" @change="updateLines( animateLines )">
+                            x: <input type="number" id="line2" v-model="line2.end.x" step="1" min="0" max="16" @change="updateLines( )">&nbsp;
+                            y: <input type="number" id="line2" v-model="line2.end.y" step="1" min="0" max="16" @change="updateLines( )">
                         </div>
                     </div>
                     <div class="option">
@@ -72,7 +72,7 @@
                             Side
                         </label>
                         <div class="group">
-                            <select name="line2side" v-model="line2.side" @change="updateLines( animateLines )">
+                            <select name="line2side" v-model="line2.side" @change="updateLines( )">
                                 <option v-for="(side, index) in sides" :value="side">{{side}}</option>
                             </select>
                         </div>
@@ -139,10 +139,14 @@ export default {
                     y: 0,
                 },
                 end: {
-                    x: 1,
-                    y: 4,
+                    x: 0,
+                    y: 0,
                 },
-                color:'#f06',
+                color:'#ff0066',
+                thickness: this.lineThickness,
+                length: 0,
+                rotation: {},
+                position: {},
                 side: "left"
             },
             line2: {
@@ -151,10 +155,14 @@ export default {
                     y: 0,
                 },
                 end: {
-                    x: 1,
-                    y: 0,
+                    x: 0,
+                    y: 1,
                 },
-                color:'#60f',
+                color:'#6600ff',
+                thickness: this.lineThickness,
+                length: 0,
+                rotation: {},
+                position: {},
                 side: "right"
             },
         }
@@ -246,33 +254,50 @@ export default {
             }
             three.scene.add(helperCube)
         },
-        updateLines(animateLines) {
-            var cube = _.find(three.scene.children, {name: 'cube'});
-            var scale = 1/this.lineThickness
-            _.each(cube.children, line => {
-                line.data.length = Line.getLength(line);
-                const scale = (line.data.length + this.lineThickness) * (1/this.lineThickness)
+        updateLines(delay = 0) {
+            const cube = _.find(three.scene.children, {name: 'cube'});
+            var cuboidLines = [
+                Line.create(this.line1, this.cube),
+                Line.create(this.line2, this.cube)
+            ];
 
-                if (animateLines) {
-                    new TWEEN.Tween( line.scale  )   
-                        .to( {x: scale}, this.transitionDuration )
-                        .easing( TWEEN.Easing.Sinusoidal.In )
-                        .start()
+            _.each(cuboidLines, (line, lineIndex) => {
+                line.rotation.setFromVector3( line.data.rotation );
+                line.position.copy( line.data.position );
+                line.scale.copy( line.data.scale );
+            });
 
-                    new TWEEN.Tween( line.position )   
-                        .to( Line.getPosition(line, this.cube), this.transitionDuration )
-                        .easing( TWEEN.Easing.Sinusoidal.In )
-                        .start()
-
-                    new TWEEN.Tween( line.rotation )   
-                        .to( Line.getRotation(line), this.transitionDuration )
-                        .easing( TWEEN.Easing.Sinusoidal.In )
-                        .start()
-                } else {
-                    line.scale.x = scale;
-                    line.rotation.setFromVector3(Line.getRotation(line));
-                    line.position.copy(Line.getPosition(line, this.cube));
+            _.each(cube.children, (line, lineIndex) => {
+                if (!cuboidLines[lineIndex]) {
+                    line.visible = false;
+                    return
                 }
+
+                if (line.visible == false) {
+                    line.visible = true;
+                }
+
+                setTimeout(() => {
+                    new TWEEN.Tween( cube.children[lineIndex].scale  )   
+                        .to( cuboidLines[lineIndex].scale, this.transitionDuration )
+                        .easing( TWEEN.Easing.Back.InOut )
+                        .start()
+
+                    new TWEEN.Tween( cube.children[lineIndex].position  )   
+                        .to( cuboidLines[lineIndex].position, this.transitionDuration )
+                        .easing( TWEEN.Easing.Back.InOut )
+                        .start()                    
+
+                    new TWEEN.Tween(cube.children[lineIndex].rotation)   
+                        .to({
+                            x: cuboidLines[lineIndex].rotation.x,
+                            z: cuboidLines[lineIndex].rotation.z,
+                            y: cuboidLines[lineIndex].rotation.y
+                        }, this.transitionDuration )
+                        .easing( TWEEN.Easing.Back.InOut )
+                        .start()
+                }, lineIndex * delay)
+                
             });
         },
         toggleWireframe() {
@@ -313,13 +338,21 @@ export default {
         cube.name = 'cube';
         three.scene.add(cube);
 
-        const line1 = Line.create(this.line1, this.lineThickness)
-        const line2 = Line.create(this.line2, this.lineThickness)
+        const line1 = Line.create(this.line1, this.cube)
+        line1.rotation.setFromVector3( line1.data.rotation );
+        line1.position.copy( line1.data.position );
+        line1.scale.copy( line1.data.scale );
+
+        const line2 = Line.create(this.line2, this.cube)
         
+        line2.rotation.setFromVector3( line2.data.rotation );
+        line2.position.copy( line2.data.position );
+        line2.scale.copy( line2.data.scale );
+
         cube.add(line1);
         cube.add(line2);
         
-        this.updateLines(false)
+        this.updateLines()
 
 
         three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);

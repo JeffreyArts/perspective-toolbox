@@ -367,11 +367,7 @@ export default {
 
             // Add Side
             _.each(polylines, polyline => {
-                line = Line.create(_.merge({}, lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}), this.cube);
-                line.rotation.setFromVector3( line.data.rotation );
-                line.position.copy( line.data.position );
-                line.scale.copy( line.data.scale );
-                this.cuboidLines.push(line)
+                this.cuboidLines.push(Line.update(lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}, this.cube))
             })
         },
         updateSeed() {

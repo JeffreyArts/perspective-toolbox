@@ -36,8 +36,15 @@ const Line  = {
         lineObject.data.position = Line.getPosition(lineObject, cube);
         lineObject.data.scale = Line.getScale(lineObject);
         lineObject.data.rotation = Line.getRotation(lineObject);
-        lineObject.visible = false;
+        // lineObject.visible = false;
         return lineObject
+    },
+    update: (lineData, props, cube) => {
+        var line = Line.create(_.merge({}, lineData, props), cube);
+        line.rotation.setFromVector3( line.data.rotation );
+        line.position.copy( line.data.position );
+        line.scale.copy( line.data.scale );
+        return line;
     },
     updateFromPolyline: (line) => {
         line.data.start = {
