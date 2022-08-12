@@ -121,13 +121,13 @@ export default {
             value: 0
         }
     },
+    mounted() {
+        window.dispatchEvent(new Event("resize"))
+    },
     methods: {
         // asdf() {
         //
         // },
-    },
-    mounted() {
-        window.dispatchEvent(new Event("resize"));
     }
 }
 </script>

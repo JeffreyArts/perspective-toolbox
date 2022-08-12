@@ -84,14 +84,14 @@
 
 
 <script>
-import * as THREE from 'three';
-import _ from 'lodash';
+import * as THREE from "three"
+import _ from "lodash"
 
-import * as BufferGeometryUtils from './../../../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js';
-import { ConvexGeometry } from './../../../node_modules/three/examples/jsm/geometries/ConvexGeometry.js';
-import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
-import view from '../../services/3d-view.js';
-import dotImage from './../../assets/images/dot.png'
+import * as BufferGeometryUtils from "./../../../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js"
+import { ConvexGeometry } from "./../../../node_modules/three/examples/jsm/geometries/ConvexGeometry.js"
+import Stats from "./../../../node_modules/three/examples/jsm/libs/stats.module.js"
+import view from "../../services/3d-view.js"
+import dotImage from "./../../assets/images/dot.png"
 
 var three = view.init({orbitControls: true})
 
@@ -111,78 +111,14 @@ export default {
             p2: new THREE.Vector3(0,8,0),
         }
     },
-    methods: {
-        init(){
-            // Rendering scene
-            var that = this;
-            function animate(index) {
-                if (!that.animation) {
-                    return;
-                }
-                three.renderer.render(three.scene, three.camera);
-
-                stats.update();
-
-                requestAnimationFrame(animate);
-            }
-
-            // Helper for displaying FPS
-            var stats = new Stats();
-            stats.dom.className = "viewport-stats"
-            this.$el.querySelector(".viewport-content").append( stats.dom );
-
-
-            // Enable animation loop
-            this.animation = true;
-            animate();
-
-            // Add scene to dom
-            this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
-
-            // Helper function for updating scene on screen resizing
-            window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
-            window.dispatchEvent(new Event("resize"));
-        },
-        updateCanvasSize(camera, renderer) {
-            var width = this.$el.clientWidth;
-            var height = this.$el.clientWidth;
-
-            renderer.setSize( width, height);
-            camera.bottom = -height;
-            camera.top = height;
-            camera.left = -width;
-            camera.right = width;
-
-            camera.updateProjectionMatrix();
-        },
-        toggleWireframe() {
-            if (this.wireframe) {
-                this.model3D.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
-            } else {
-                this.model3D.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
-            }
-        },
-        createModel() {
-            // this.model3D = new THREE.Group();
-            
-            this.line = new THREE.LineCurve3( this.p1,  this.p2 )
-            const tubeGeometry = new THREE.TubeBufferGeometry( this.line, this.tubularSegments, this.radius, this.radialSegments, false);
-            this.model3D = new THREE.Mesh( tubeGeometry );
-            
-            three.scene.add(this.model3D);
-        },
-        updateLine() {
-            this.model3D.geometry = new THREE.TubeBufferGeometry(this.line, this.tubularSegments, this.radius, this.radialSegments, false)
-        }
-    },
     mounted() {
-        this.init();
+        this.init()
 
         // Prevent multiple camera's / meshes to be added
         if (three.scene.initialised) {
-            this.model3D = _.find(three.scene.children, {type:"Mesh"}).geometry;
+            this.model3D = _.find(three.scene.children, {type:"Mesh"}).geometry
             // var pos = this.model3D.getAttribute("position").array;
-            return;
+            return
         }
         // Everything below will only be added the first time that this component is mounted
 
@@ -194,18 +130,82 @@ export default {
         three.scene.add(three.camera)
 
         // Create object
-        this.createModel();
+        this.createModel()
         
        
         // Features
-        this.toggleWireframe();
+        this.toggleWireframe()
 
 
-        three.scene.initialised = true;
+        three.scene.initialised = true
     },
     unmounted() {
         // This destroys the animation loop when navigating to another page
-        this.animation = false;
+        this.animation = false
+    },
+    methods: {
+        init(){
+            // Rendering scene
+            var that = this
+            function animate(index) {
+                if (!that.animation) {
+                    return
+                }
+                three.renderer.render(three.scene, three.camera)
+
+                stats.update()
+
+                requestAnimationFrame(animate)
+            }
+
+            // Helper for displaying FPS
+            var stats = new Stats()
+            stats.dom.className = "viewport-stats"
+            this.$el.querySelector(".viewport-content").append( stats.dom )
+
+
+            // Enable animation loop
+            this.animation = true
+            animate()
+
+            // Add scene to dom
+            this.$el.querySelector(".viewport-content").append(three.renderer.domElement )
+
+            // Helper function for updating scene on screen resizing
+            window.addEventListener("resize", () => {this.updateCanvasSize(three.camera, three.renderer)})
+            window.dispatchEvent(new Event("resize"))
+        },
+        updateCanvasSize(camera, renderer) {
+            var width = this.$el.clientWidth
+            var height = this.$el.clientWidth
+
+            renderer.setSize( width, height)
+            camera.bottom = -height
+            camera.top = height
+            camera.left = -width
+            camera.right = width
+
+            camera.updateProjectionMatrix()
+        },
+        toggleWireframe() {
+            if (this.wireframe) {
+                this.model3D.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true})
+            } else {
+                this.model3D.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false})
+            }
+        },
+        createModel() {
+            // this.model3D = new THREE.Group();
+            
+            this.line = new THREE.LineCurve3( this.p1,  this.p2 )
+            const tubeGeometry = new THREE.TubeBufferGeometry( this.line, this.tubularSegments, this.radius, this.radialSegments, false)
+            this.model3D = new THREE.Mesh( tubeGeometry )
+            
+            three.scene.add(this.model3D)
+        },
+        updateLine() {
+            this.model3D.geometry = new THREE.TubeBufferGeometry(this.line, this.tubularSegments, this.radius, this.radialSegments, false)
+        }
     }
 }
 </script>

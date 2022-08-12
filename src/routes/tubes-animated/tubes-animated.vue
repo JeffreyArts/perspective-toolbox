@@ -94,12 +94,12 @@
 
 
 <script>
-import * as THREE from 'three';
-import _ from 'lodash';
-import TWEEN from '@tweenjs/tween.js';
+import * as THREE from "three"
+import _ from "lodash"
+import TWEEN from "@tweenjs/tween.js"
 
-import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
-import view from '../../services/3d-view.js';
+import Stats from "./../../../node_modules/three/examples/jsm/libs/stats.module.js"
+import view from "../../services/3d-view.js"
 
 var three = view.init({orbitControls: true})
 
@@ -122,108 +122,8 @@ export default {
             p2: new THREE.Vector3(0,8,0),
         }
     },
-    methods: {
-        init(){
-            // Rendering scene
-            var that = this;
-            function animate(index) {
-                if (!that.animation) {
-
-                    for (let i = three.scene.children.length - 1; i >= 0; i--) {
-                        if(three.scene.children[i].type === "Mesh") {
-                            three.scene.children[i].geometry.dispose();
-                            three.scene.children[i].material.dispose();
-                        }
-                        three.scene.remove(three.scene.children[i]);
-                    }
-                    return;
-                }
-                three.renderer.render(three.scene, three.camera);
-                that.updateLine()
-                stats.update();
-                TWEEN.update(index)
-                requestAnimationFrame(animate);
-            }
-
-            // Helper for displaying FPS
-            var stats = new Stats();
-            stats.dom.className = "viewport-stats"
-            this.$el.querySelector(".viewport-content").append( stats.dom );
-
-
-            // Enable animation loop
-            this.animation = true;
-            animate();
-
-            // Add scene to dom
-            this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
-
-            // Helper function for updating scene on screen resizing
-            window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
-            window.dispatchEvent(new Event("resize"));
-        },
-        updateCanvasSize(camera, renderer) {
-            var width = this.$el.clientWidth;
-            var height = this.$el.clientWidth;
-
-            renderer.setSize( width, height);
-            camera.bottom = -height;
-            camera.top = height;
-            camera.left = -width;
-            camera.right = width;
-
-            camera.updateProjectionMatrix();
-        },
-        toggleWireframe() {
-            this.material.wireframe = this.wireframe
-        },
-        createModels() {
-            for (let i = three.scene.children.length - 1; i >= 0; i--) {
-                if(three.scene.children[i].type === "Mesh") {
-                    three.scene.children[i].geometry.dispose();
-                    three.scene.remove(three.scene.children[i]);
-                }
-            }
-            three.renderer.renderLists.dispose();
-            this.line = new THREE.LineCurve3( this.p1,  this.p2 )
-            const tubeGeometry = new THREE.TubeBufferGeometry( this.line, this.tubularSegments, this.radius, this.radialSegments, false);
-            this.model3D = new THREE.Mesh( tubeGeometry, this.material );
-            var offset = 4;
-            var width = this.rows
-            var height = this.columns
-            for (var x=0; x<width; x++) {
-                for (var y=0; y<height; y++) {
-                    var newModel = this.model3D.clone()
-                    newModel.position.x = x*offset - width*offset/2 + offset/2;
-                    newModel.position.z = y*offset - height*offset/2+ offset/2;
-                    three.scene.add(newModel);
-                }
-            }
-        },
-        startAnimation() {
-            var radius = 5;
-            const tween = new TWEEN.Tween({angle:0}) // Create a new tween that modifies 'coords'.
-                .to({angle:360}, 1600) // Move to (300, 200) in 1 second.
-                .easing(TWEEN.Easing.Quadratic.Out) // Use an easing function to make the animation smooth.
-                .repeat(Infinity)
-                // .yoyo()
-                .onUpdate((v,i) => {
-                    this.p2.x = radius * Math.sin(Math.PI * 2 * v.angle / 360);
-                    this.p2.z = radius * Math.cos(Math.PI * 2 * v.angle / 360);
-                    // this.updateLine();
-                })
-                .start() // Start the tween immediately.
-        },
-        updateLine() {
-            _.each(three.scene.children, model => {
-                if (model.type == "Mesh") {
-                    model.geometry = new THREE.TubeBufferGeometry(this.line, this.tubularSegments, this.radius, this.radialSegments, false)
-                }
-            } )
-        }
-    },
     mounted() {
-        this.init();
+        this.init()
 
         // Prevent multiple camera's / meshes to be added
         
@@ -236,18 +136,118 @@ export default {
         three.camera.lookAt(0,0,0)
         three.scene.add(three.camera)
 
-        this.toggleWireframe();
+        this.toggleWireframe()
 
         // Create object
-        this.createModels();
-        this.startAnimation();
+        this.createModels()
+        this.startAnimation()
 
 
-        three.scene.initialised = true;
+        three.scene.initialised = true
     },
     unmounted() {
         // This destroys the animation loop when navigating to another page
-        this.animation = false;
+        this.animation = false
+    },
+    methods: {
+        init(){
+            // Rendering scene
+            var that = this
+            function animate(index) {
+                if (!that.animation) {
+
+                    for (let i = three.scene.children.length - 1; i >= 0; i--) {
+                        if(three.scene.children[i].type === "Mesh") {
+                            three.scene.children[i].geometry.dispose()
+                            three.scene.children[i].material.dispose()
+                        }
+                        three.scene.remove(three.scene.children[i])
+                    }
+                    return
+                }
+                three.renderer.render(three.scene, three.camera)
+                that.updateLine()
+                stats.update()
+                TWEEN.update(index)
+                requestAnimationFrame(animate)
+            }
+
+            // Helper for displaying FPS
+            var stats = new Stats()
+            stats.dom.className = "viewport-stats"
+            this.$el.querySelector(".viewport-content").append( stats.dom )
+
+
+            // Enable animation loop
+            this.animation = true
+            animate()
+
+            // Add scene to dom
+            this.$el.querySelector(".viewport-content").append(three.renderer.domElement )
+
+            // Helper function for updating scene on screen resizing
+            window.addEventListener("resize", () => {this.updateCanvasSize(three.camera, three.renderer)})
+            window.dispatchEvent(new Event("resize"))
+        },
+        updateCanvasSize(camera, renderer) {
+            var width = this.$el.clientWidth
+            var height = this.$el.clientWidth
+
+            renderer.setSize( width, height)
+            camera.bottom = -height
+            camera.top = height
+            camera.left = -width
+            camera.right = width
+
+            camera.updateProjectionMatrix()
+        },
+        toggleWireframe() {
+            this.material.wireframe = this.wireframe
+        },
+        createModels() {
+            for (let i = three.scene.children.length - 1; i >= 0; i--) {
+                if(three.scene.children[i].type === "Mesh") {
+                    three.scene.children[i].geometry.dispose()
+                    three.scene.remove(three.scene.children[i])
+                }
+            }
+            three.renderer.renderLists.dispose()
+            this.line = new THREE.LineCurve3( this.p1,  this.p2 )
+            const tubeGeometry = new THREE.TubeBufferGeometry( this.line, this.tubularSegments, this.radius, this.radialSegments, false)
+            this.model3D = new THREE.Mesh( tubeGeometry, this.material )
+            var offset = 4
+            var width = this.rows
+            var height = this.columns
+            for (var x=0; x<width; x++) {
+                for (var y=0; y<height; y++) {
+                    var newModel = this.model3D.clone()
+                    newModel.position.x = x*offset - width*offset/2 + offset/2
+                    newModel.position.z = y*offset - height*offset/2+ offset/2
+                    three.scene.add(newModel)
+                }
+            }
+        },
+        startAnimation() {
+            var radius = 5
+            const tween = new TWEEN.Tween({angle:0}) // Create a new tween that modifies 'coords'.
+                .to({angle:360}, 1600) // Move to (300, 200) in 1 second.
+                .easing(TWEEN.Easing.Quadratic.Out) // Use an easing function to make the animation smooth.
+                .repeat(Infinity)
+                // .yoyo()
+                .onUpdate((v,i) => {
+                    this.p2.x = radius * Math.sin(Math.PI * 2 * v.angle / 360)
+                    this.p2.z = radius * Math.cos(Math.PI * 2 * v.angle / 360)
+                    // this.updateLine();
+                })
+                .start() // Start the tween immediately.
+        },
+        updateLine() {
+            _.each(three.scene.children, model => {
+                if (model.type == "Mesh") {
+                    model.geometry = new THREE.TubeBufferGeometry(this.line, this.tubularSegments, this.radius, this.radialSegments, false)
+                }
+            } )
+        }
     }
 }
 </script>

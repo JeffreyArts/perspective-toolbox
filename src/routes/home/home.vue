@@ -1,5 +1,4 @@
 <template>
-
     <div class="toolbox-home">
         <h1 class="title">Toolbox homepage</h1>
 
@@ -22,10 +21,10 @@ export default {
             isOpen: true
         }
     },
-    methods: {
-    },
     mounted() {
 
+    },
+    methods: {
     }
 }
 </script>

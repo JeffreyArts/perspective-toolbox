@@ -43,14 +43,14 @@
 
 
 <script>
-import * as THREE from 'three';
-import _ from 'lodash';
+import * as THREE from "three"
+import _ from "lodash"
 
-import * as BufferGeometryUtils from './../../../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js';
-import { ConvexGeometry } from './../../../node_modules/three/examples/jsm/geometries/ConvexGeometry.js';
-import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
-import view from './../../services/3d-view.js';
-import dotImage from './../../assets/images/dot.png'
+import * as BufferGeometryUtils from "./../../../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js"
+import { ConvexGeometry } from "./../../../node_modules/three/examples/jsm/geometries/ConvexGeometry.js"
+import Stats from "./../../../node_modules/three/examples/jsm/libs/stats.module.js"
+import view from "./../../services/3d-view.js"
+import dotImage from "./../../assets/images/dot.png"
 
 var three = view.init({orbitControls: true})
 
@@ -69,89 +69,119 @@ export default {
             point4: [0,0,1],
         }
     },
+    mounted() {
+        this.init()
+
+        // Prevent multiple camera's / meshes to be added
+        if (three.scene.initialised) {
+            return
+        }
+        // Everything below will only be added the first time that this component is mounted
+
+        // Set camera
+        three.camera.position.z = 0
+        three.camera.position.y = 48
+        three.camera.position.x = 0
+        three.camera.lookAt(0,0,0)
+        three.scene.add(three.camera)
+
+        // Create object
+        this.createModel()
+        
+       
+        // Features
+        this.toggleConvex()
+        this.toggleWireframe()
+
+
+        three.scene.initialised = true
+    },
+    unmounted() {
+        // This destroys the animation loop when navigating to another page
+        this.animation = false
+    },
     methods: {
         init(){
             // Rendering scene
-            var that = this;
+            var that = this
             function animate(index) {
                 if (!that.animation) {
-                    return;
+                    return
                 }
-                three.renderer.render(three.scene, three.camera);
+                three.renderer.render(three.scene, three.camera)
 
-                stats.update();
+                stats.update()
 
-                requestAnimationFrame(animate);
+                requestAnimationFrame(animate)
             }
 
             // Helper for displaying FPS
-            var stats = new Stats();
+            var stats = new Stats()
             stats.dom.className = "viewport-stats"
-            this.$el.querySelector(".viewport-content").append( stats.dom );
+            this.$el.querySelector(".viewport-content").append( stats.dom )
 
 
             // Enable animation loop
-            this.animation = true;
-            animate();
+            this.animation = true
+            animate()
 
             // Add scene to dom
-            this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
+            this.$el.querySelector(".viewport-content").append(three.renderer.domElement )
 
             // Helper function for updating scene on screen resizing
-            window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
-            window.dispatchEvent(new Event("resize"));
+            window.addEventListener("resize", () => {this.updateCanvasSize(three.camera, three.renderer)})
+            window.dispatchEvent(new Event("resize"))
         },
         updateCanvasSize(camera, renderer) {
-            var width = this.$el.clientWidth;
-            var height = this.$el.clientWidth;
+            var width = this.$el.clientWidth
+            var height = this.$el.clientWidth
 
-            renderer.setSize( width, height);
-            camera.bottom = -height;
-            camera.top = height;
-            camera.left = -width;
-            camera.right = width;
+            renderer.setSize( width, height)
+            camera.bottom = -height
+            camera.top = height
+            camera.left = -width
+            camera.right = width
 
-            camera.updateProjectionMatrix();
+            camera.updateProjectionMatrix()
         },
         toggleWireframe() {
-            var group = _.find(three.scene.children, {type:"Group"});
+            var group = _.find(three.scene.children, {type:"Group"})
             group.children.forEach(obj => {
                 if (obj.type === "Mesh") {
                     if (this.wireframe) {
-                        obj.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
+                        obj.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true})
                     } else {
-                        obj.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
+                        obj.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false})
                     }
                 }
             })
         },
         createModel() {
+            this.geometry = new THREE.Group()
+            three.scene.add( this.geometry )
 
-            this.geometry = new THREE.Group();
-            three.scene.add( this.geometry );
-
-            const loader = new THREE.TextureLoader();
-            const texture = loader.load( dotImage );
+            const loader = new THREE.TextureLoader()
+            const texture = loader.load( dotImage )
             
             // points
 
-            let dodecahedronGeometry = new THREE.DodecahedronGeometry( 10 );
+            let dodecahedronGeometry = new THREE.DodecahedronGeometry( 10 )
 
             // if normal and uv attributes are not removed, mergeVertices() can't consolidate indentical vertices with different normal/uv data
 
-            dodecahedronGeometry.deleteAttribute( 'normal' );
-            dodecahedronGeometry.deleteAttribute( 'uv' );
+            dodecahedronGeometry.deleteAttribute( "normal" )
+            dodecahedronGeometry.deleteAttribute( "uv" )
 
-            dodecahedronGeometry = BufferGeometryUtils.mergeVertices( dodecahedronGeometry );
+            dodecahedronGeometry = BufferGeometryUtils.mergeVertices( dodecahedronGeometry )
             
-            const vertices = [];
-            const positionAttribute = dodecahedronGeometry.getAttribute( 'position' );
+            const vertices = []
+            const positionAttribute = dodecahedronGeometry.getAttribute( "position" )
 
             for ( let i = 0; i < positionAttribute.count; i ++ ) {
 
-                const vertex = new THREE.Vector3();
-                vertex.fromBufferAttribute( positionAttribute, i );
-                vertices.push( vertex );
+                const vertex = new THREE.Vector3()
+                vertex.fromBufferAttribute( positionAttribute, i )
+                vertices.push( vertex )
 
             }
 
@@ -162,10 +192,10 @@ export default {
             //     alphaTest: 0.5
             // } );
 
-            const pointsGeometry = new THREE.BufferGeometry().setFromPoints( vertices );
+            const pointsGeometry = new THREE.BufferGeometry().setFromPoints( vertices )
 
-            const points = new THREE.Points( pointsGeometry );
-            this.geometry.add( points );
+            const points = new THREE.Points( pointsGeometry )
+            this.geometry.add( points )
 
 
             // convex hull
@@ -174,26 +204,26 @@ export default {
                 color: 0xffffff,
                 opacity: 0.5,
                 transparent: true
-            } );
+            } )
 
-            const meshGeometry = new ConvexGeometry( vertices );
+            const meshGeometry = new ConvexGeometry( vertices )
 
-            const mesh1 = new THREE.Mesh( meshGeometry, meshMaterial );
-            mesh1.material.side = THREE.BackSide; // back faces
-            mesh1.renderOrder = 0;
-            this.geometry.add( mesh1 );
+            const mesh1 = new THREE.Mesh( meshGeometry, meshMaterial )
+            mesh1.material.side = THREE.BackSide // back faces
+            mesh1.renderOrder = 0
+            this.geometry.add( mesh1 )
 
-            const mesh2 = new THREE.Mesh( meshGeometry, meshMaterial.clone() );
-            mesh2.material.side = THREE.FrontSide; // front faces
-            mesh2.renderOrder = 1;
-            this.geometry.add( mesh2 );
+            const mesh2 = new THREE.Mesh( meshGeometry, meshMaterial.clone() )
+            mesh2.material.side = THREE.FrontSide // front faces
+            mesh2.renderOrder = 1
+            this.geometry.add( mesh2 )
         },
         toggleConvex() {
-            var group = _.find(three.scene.children, {type:"Group"});
-            var points = _.find(group.children, {type:"Points"});
+            var group = _.find(three.scene.children, {type:"Group"})
+            var points = _.find(group.children, {type:"Points"})
 
-            const loader = new THREE.TextureLoader();
-            const texture = loader.load( dotImage );
+            const loader = new THREE.TextureLoader()
+            const texture = loader.load( dotImage )
 
             if (this.convex) {
                 points.material = new THREE.PointsMaterial( {
@@ -201,14 +231,14 @@ export default {
                     map: texture,
                     size: 1,
                     alphaTest: 0.5
-                });
+                })
             } else {
                 points.material = new THREE.PointsMaterial( {
                     color: 0xff0066,
                     map: texture,
                     size: 0,
                     alphaTest: 0.5
-                });
+                })
             }
             // var group = _.find(three.scene.children, {type:"Group"});
             // group.children.forEach(obj => {
@@ -223,37 +253,6 @@ export default {
 
             
         },
-    },
-    mounted() {
-        this.init();
-
-        // Prevent multiple camera's / meshes to be added
-        if (three.scene.initialised) {
-            return;
-        }
-        // Everything below will only be added the first time that this component is mounted
-
-        // Set camera
-        three.camera.position.z = 0
-        three.camera.position.y = 48
-        three.camera.position.x = 0
-        three.camera.lookAt(0,0,0)
-        three.scene.add(three.camera)
-
-        // Create object
-        this.createModel();
-        
-       
-        // Features
-        this.toggleConvex();
-        this.toggleWireframe();
-
-
-        three.scene.initialised = true;
-    },
-    unmounted() {
-        // This destroys the animation loop when navigating to another page
-        this.animation = false;
     }
 }
 </script>

@@ -52,12 +52,12 @@
 
 
 <script>
-import * as THREE from 'three';
-import _ from 'lodash';
+import * as THREE from "three"
+import _ from "lodash"
 
-import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
-import view from '../../services/3d-view.js';
-import domtoimage from 'dom-to-image';
+import Stats from "./../../../node_modules/three/examples/jsm/libs/stats.module.js"
+import view from "../../services/3d-view.js"
+import domtoimage from "dom-to-image"
 
 var three = view.init({orbitControls: true})
 
@@ -84,92 +84,16 @@ export default {
             }
         },
         fontSize(newVal, oldVal) {
-            this.css.fontSize = `${newVal}px`;
+            this.css.fontSize = `${newVal}px`
         }
     },
-    methods: {
-        init(){
-            // Rendering scene
-            var that = this;
-            function animate(index) {
-                if (!that.animation) {
-                    return;
-                }
-                three.renderer.render(three.scene, three.camera);
-
-                stats.update();
-
-                requestAnimationFrame(animate);
-            }
-
-            // Helper for displaying FPS
-            var stats = new Stats();
-            stats.dom.className = "viewport-stats"
-            this.$el.querySelector(".viewport-content").append( stats.dom );
-
-
-            // Enable animation loop
-            this.animation = true;
-            animate();
-
-            // Add scene to dom
-            this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
-        },
-        updateCanvasSize() {
-
-            var width = this.$el.querySelector(".dashboard-item[type='threejs']").clientHeight;
-            var height = this.$el.querySelector(".dashboard-item[type='threejs']").clientHeight;
-
-            three.renderer.setSize( width, height);
-            three.camera.bottom = -height;
-            three.camera.top = height;
-            three.camera.left = -width;
-            three.camera.right = width;
-
-            three.camera.updateProjectionMatrix();
-        },
-        updateCanvas() {
-            var domElement = document.getElementById('html-output');
-            domtoimage.toPng(domElement).then( (dataUrl) => {
-                var img = new Image();
-                img.src = dataUrl;
-
-                var targetElement = document.querySelector(".dashboard-item[type='png']");
-                targetElement.innerHTML = "";
-                targetElement.appendChild(img);
-                img.onload = () => {
-                    new THREE.TextureLoader().load( img.src, texture => {
-                        this.plane.material = new THREE.MeshBasicMaterial( {color: 0xffffff, map: texture} );
-                    }, null, (error) => {
-                        console.error(error)
-                    }); 
-                    
-                    window.dispatchEvent(new Event("resize"));
-                    this.plane.geometry = new THREE.PlaneGeometry( img.clientWidth / img.clientHeight * 1, 1 ); 
-                }
-            })
-            .catch(function (error) {
-                console.error('oops, something went wrong!', error);
-            });
-        },
-        createPlane() {
-            const geometry = new THREE.PlaneGeometry( 1, 1 ); // update with height/width of image
-            const material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
-            const plane = new THREE.Mesh( geometry, material );
-            plane.position.x = 0;
-            plane.position.y = 0;
-            plane.position.z = 0;
-            three.scene.add( plane );
-            this.plane = _.find(three.scene.children, {type:"Mesh"});
-        },
-    },
     mounted() {
-        this.init();
+        this.init()
 
         // Prevent multiple camera's / meshes to be added
         if (three.scene.initialised) {
             // this.geometry = _.find(three.scene.children, {type:"Mesh"}).geometry;
-            return;
+            return
         }
         // Everything below will only be added the first time that this component is mounted
 
@@ -182,16 +106,92 @@ export default {
         three.scene.add(three.camera)
 
         // Create object
-        this.createPlane();
+        this.createPlane()
 
-        this.updateCanvas();
-        three.scene.initialised = true;
-        window.addEventListener('resize', this.updateCanvasSize);
+        this.updateCanvas()
+        three.scene.initialised = true
+        window.addEventListener("resize", this.updateCanvasSize)
     },
     unmounted() {
         // This destroys the animation loop when navigating to another page
-        this.animation = false;
-        window.removeEventListener('resize', this.updateCanvasSize);
+        this.animation = false
+        window.removeEventListener("resize", this.updateCanvasSize)
+    },
+    methods: {
+        init(){
+            // Rendering scene
+            var that = this
+            function animate(index) {
+                if (!that.animation) {
+                    return
+                }
+                three.renderer.render(three.scene, three.camera)
+
+                stats.update()
+
+                requestAnimationFrame(animate)
+            }
+
+            // Helper for displaying FPS
+            var stats = new Stats()
+            stats.dom.className = "viewport-stats"
+            this.$el.querySelector(".viewport-content").append( stats.dom )
+
+
+            // Enable animation loop
+            this.animation = true
+            animate()
+
+            // Add scene to dom
+            this.$el.querySelector(".viewport-content").append(three.renderer.domElement )
+        },
+        updateCanvasSize() {
+
+            var width = this.$el.querySelector(".dashboard-item[type='threejs']").clientHeight
+            var height = this.$el.querySelector(".dashboard-item[type='threejs']").clientHeight
+
+            three.renderer.setSize( width, height)
+            three.camera.bottom = -height
+            three.camera.top = height
+            three.camera.left = -width
+            three.camera.right = width
+
+            three.camera.updateProjectionMatrix()
+        },
+        updateCanvas() {
+            var domElement = document.getElementById("html-output")
+            domtoimage.toPng(domElement).then( (dataUrl) => {
+                var img = new Image()
+                img.src = dataUrl
+
+                var targetElement = document.querySelector(".dashboard-item[type='png']")
+                targetElement.innerHTML = ""
+                targetElement.appendChild(img)
+                img.onload = () => {
+                    new THREE.TextureLoader().load( img.src, texture => {
+                        this.plane.material = new THREE.MeshBasicMaterial( {color: 0xffffff, map: texture} )
+                    }, null, (error) => {
+                        console.error(error)
+                    }) 
+                    
+                    window.dispatchEvent(new Event("resize"))
+                    this.plane.geometry = new THREE.PlaneGeometry( img.clientWidth / img.clientHeight * 1, 1 ) 
+                }
+            })
+                .catch(function (error) {
+                    console.error("oops, something went wrong!", error)
+                })
+        },
+        createPlane() {
+            const geometry = new THREE.PlaneGeometry( 1, 1 ) // update with height/width of image
+            const material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} )
+            const plane = new THREE.Mesh( geometry, material )
+            plane.position.x = 0
+            plane.position.y = 0
+            plane.position.z = 0
+            three.scene.add( plane )
+            this.plane = _.find(three.scene.children, {type:"Mesh"})
+        },
     }
 }
 </script>

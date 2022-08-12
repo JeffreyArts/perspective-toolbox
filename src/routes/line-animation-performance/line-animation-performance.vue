@@ -87,13 +87,13 @@
 
 
 <script>
-import * as THREE from 'three';
-import _ from 'lodash';
+import * as THREE from "three"
+import _ from "lodash"
 
-import TWEEN from '@tweenjs/tween.js';
-import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
-import view from '../../services/3d-view.js';
-import Line from '../../services/line.js';
+import TWEEN from "@tweenjs/tween.js"
+import Stats from "./../../../node_modules/three/examples/jsm/libs/stats.module.js"
+import view from "../../services/3d-view.js"
+import Line from "../../services/line.js"
 
 var three = view.init({orbitControls: true})
 
@@ -152,80 +152,99 @@ export default {
             },
         }
     },
+    mounted() {
+        this.init()
+
+        // Prevent multiple camera's / meshes to be added
+        if (three.scene.initialised) {
+            this.mesh = _.find(three.scene.children, {type:"Mesh"})
+            return
+        }
+        // Everything below will only be added the first time that this component is mounted
+
+
+        // Set camera in front position
+        three.camera.position.z = this.cube.depth*4
+        three.camera.position.y = this.cube.height/2
+        three.camera.position.x = this.cube.width/2
+        three.camera.lookAt(this.cube.width/2, this.cube.height/2, this.cube.depth/2)
+        three.scene.add(three.camera)
+        
+        const cube = new THREE.Group()
+        cube.name = "cube"
+        three.scene.add(cube)
+
+
+        
+        this.createHelperCube()
+        this.createCuboid()
+        this.createLines(true)
+        this.toggleHelperCube()
+
+
+        three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2)
+        three.camera.lookAt(three.controls.target)
+        three.scene.initialised = true
+    },
+    unmounted() {
+        // This destroys the animation loop when navigating to another page
+        this.animation = false
+    },
     methods: {
         init(){
             // Rendering scene
-            var that = this;
+            var that = this
             function animate(index) {
                 if (!that.animation) {
-                    return;
+                    return
                 }
-                three.renderer.render(three.scene, three.camera);
+                three.renderer.render(three.scene, three.camera)
 
-                stats.update();
+                stats.update()
                 TWEEN.update(index)
 
-                requestAnimationFrame(animate);
+                requestAnimationFrame(animate)
             }
 
             // Helper for displaying FPS
-            var stats = new Stats();
+            var stats = new Stats()
             stats.dom.className = "viewport-stats"
-            this.$el.querySelector(".viewport-content").append( stats.dom );
+            this.$el.querySelector(".viewport-content").append( stats.dom )
 
 
             // Enable animation loop
-            this.animation = true;
-            animate();
+            this.animation = true
+            animate()
 
             // Add scene to dom
-            this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
+            this.$el.querySelector(".viewport-content").append(three.renderer.domElement )
 
             // Helper function for updating scene on screen resizing
-            window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
-            window.dispatchEvent(new Event("resize"));
-        },
-        updateThickness() {
-            var cube = _.find(three.scene.children, {name: 'cube'});
-            _.each(this.cuboidLines, (cuboidLine, lineIndex) => {
-                cuboidLine.data.thickness = this.lineThickness
-                cuboidLine.data.length = Line.getLength(cuboidLine)
-
-                new TWEEN.Tween( cube.children[lineIndex].scale  )   
-                    .to( Line.getScale(cuboidLine), this.transitionDuration )
-                    .easing( this.transitionTypes[this.transitionType] )
-                    .start()
-            });
+            window.addEventListener("resize", () => {this.updateCanvasSize(three.camera, three.renderer)})
+            window.dispatchEvent(new Event("resize"))
         },
         updateCanvasSize(camera, renderer) {
-            var width = this.$el.clientWidth;
-            var height = this.$el.clientWidth;
+            var width = this.$el.clientWidth
+            var height = this.$el.clientWidth
 
-            renderer.setSize( width, height);
-            camera.bottom = -height;
-            camera.top = height;
-            camera.left = -width;
-            camera.right = width;
+            renderer.setSize( width, height)
+            camera.bottom = -height
+            camera.top = height
+            camera.left = -width
+            camera.right = width
 
-            camera.updateProjectionMatrix();
-        },
-        updateMaxLines() {
-            if (this.cuboidLines.length>this.maxLines) {
-                this.cuboidLines.length = this.maxLines;
-                this.amountOfLines = this.maxLines;
-            }
-            this.createCuboid(true)
+            camera.updateProjectionMatrix()
         },
         createCuboid(update = false) {
-            const cube = _.find(three.scene.children, {name: 'cube'});
+            const cube = _.find(three.scene.children, {name: "cube"})
 
             // Clean cube
             for (let i = cube.children.length - 1; i >= 0; i--) {
                 if(cube.children[i].type === "Mesh") {
-                    cube.children[i].geometry.dispose();
-                    cube.children[i].material.dispose();
+                    cube.children[i].geometry.dispose()
+                    cube.children[i].material.dispose()
                 }
-                cube.remove(cube.children[i]);
+                cube.remove(cube.children[i])
             }
             
             const lineData = {
@@ -237,7 +256,7 @@ export default {
                     x: 0,
                     y: 0,
                 },
-                color:'#ff0066',
+                color:"#ff0066",
                 thickness: this.lineThickness,
                 length: 0,
                 rotation: {},
@@ -247,14 +266,14 @@ export default {
             let line = null
 
             for (let index = 0; index < this.maxLines; index++) {
-                line = Line.create(lineData, this.cube);
-                cube.add(line);
-                line.rotation.setFromVector3( line.data.rotation );
-                line.position.copy( line.data.position );
-                line.scale.copy( line.data.scale );
+                line = Line.create(lineData, this.cube)
+                cube.add(line)
+                line.rotation.setFromVector3( line.data.rotation )
+                line.position.copy( line.data.position )
+                line.scale.copy( line.data.scale )
             }
 
-            three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
+            three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2)
             three.camera.lookAt(three.controls.target)
             if (update) {
                 this.createLines(true)
@@ -262,14 +281,14 @@ export default {
         },
         createHelperCube() {
 
-            var helperCube = _.find(three.scene.children, {name: 'helper-cube'});
+            var helperCube = _.find(three.scene.children, {name: "helper-cube"})
             if (!helperCube) {
-                helperCube = new THREE.Group();
-                helperCube.name = "helper-cube";
+                helperCube = new THREE.Group()
+                helperCube.name = "helper-cube"
                 three.scene.add(helperCube)
             }
 
-            let sphere = new THREE.Mesh(new THREE.SphereGeometry( 0.01, 32, 16 ), new THREE.MeshBasicMaterial({color: 0xcccccc, wireframe: true}));
+            let sphere = new THREE.Mesh(new THREE.SphereGeometry( 0.01, 32, 16 ), new THREE.MeshBasicMaterial({color: 0xcccccc, wireframe: true}))
             
             for (var x=0; x<this.cube.width; x++) {
                 for (var y=0; y<this.cube.height; y++) {
@@ -278,13 +297,13 @@ export default {
                     sphere.position.x = x
                     sphere.position.y = y
                     sphere.position.z = 0
-                    helperCube.add(sphere.clone());
+                    helperCube.add(sphere.clone())
 
                     // Front
                     sphere.position.x = x
                     sphere.position.y = y
                     sphere.position.z = this.cube.depth-1
-                    helperCube.add(sphere.clone());
+                    helperCube.add(sphere.clone())
                 }
             }
             
@@ -294,13 +313,13 @@ export default {
                     sphere.position.x = 0
                     sphere.position.y = y
                     sphere.position.z = x
-                    helperCube.add(sphere.clone());
+                    helperCube.add(sphere.clone())
 
                     // Right
                     sphere.position.x = this.cube.width-1
                     sphere.position.y = y
                     sphere.position.z = x
-                    helperCube.add(sphere.clone());
+                    helperCube.add(sphere.clone())
                 }
             }
             
@@ -310,30 +329,99 @@ export default {
                     sphere.position.x = x
                     sphere.position.y = 0
                     sphere.position.z = y
-                    helperCube.add(sphere.clone());
+                    helperCube.add(sphere.clone())
 
                     // Top
                     sphere.position.x = x
                     sphere.position.y = this.cube.height-1
                     sphere.position.z = y
-                    helperCube.add(sphere.clone());
+                    helperCube.add(sphere.clone())
                 }
             }
 
             helperCube.visible = this.helperCubeVisibility
         },
+        createLines(update = false) {
+            this.cuboidLines.length = 0
+            let horizontal, horSize, vertSize, lineData
+
+            for (var i=0; i<this.amountOfLines; i++) {
+                lineData = {
+                    start: {
+                        x: 0,
+                        y: 0,
+                    },
+                    end: {
+                        x: 0,
+                        y: 1,
+                    },
+                    color: "#ff0066",
+                    thickness: this.lineThickness
+                }
+                
+                lineData.side = this.sides[Math.floor(Math.random()*this.sides.length)]
+                horizontal = Math.random() < 0.5
+                if (lineData.side == "front" || lineData.side == "back") {
+                    horSize = this.cube.width
+                    vertSize = this.cube.height
+                } else if (lineData.side == "left" || lineData.side == "right") {
+                    horSize = this.cube.depth
+                    vertSize = this.cube.height
+                } else {
+                    horSize = this.cube.width
+                    vertSize = this.cube.depth
+                } 
+
+                if (horizontal) {
+                    lineData.start.x = Math.floor(Math.random() * horSize)
+                    lineData.end.x = lineData.start.x
+
+                    lineData.start.y = Math.floor(Math.random() * vertSize)
+                    lineData.end.y = lineData.start.y
+                    
+                    while(lineData.end.x == lineData.start.x) {
+                        lineData.end.x = Math.floor(Math.random() * horSize)
+                    }
+                } else {
+                    lineData.start.x = Math.floor(Math.random() * horSize)
+                    lineData.end.x = lineData.start.x
+
+                    lineData.start.y = Math.floor(Math.random() * vertSize)
+                    lineData.end.y = lineData.start.y
+                    
+                    while(lineData.end.y == lineData.start.y) {
+                        lineData.end.y = Math.floor(Math.random() * vertSize)
+                    }
+                }
+                var line = Line.create(lineData, this.cube)
+
+                line.rotation.setFromVector3( line.data.rotation )
+                line.position.copy( line.data.position )
+                line.scale.copy( line.data.scale )
+                
+                this.cuboidLines.push(line)
+            }
+
+            if(update){
+                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2)
+                three.camera.lookAt(three.controls.target)
+                this.createHelperCube()
+                this.updateLines()
+            }
+            
+        },
         updateLines(delay = 0) {
-            const cube = _.find(three.scene.children, {name: 'cube'});
-            this.cuboidLines = _.shuffle(this.cuboidLines);
+            const cube = _.find(three.scene.children, {name: "cube"})
+            this.cuboidLines = _.shuffle(this.cuboidLines)
 
             _.each(cube.children, (line, lineIndex) => {
                 if (!this.cuboidLines[lineIndex]) {
-                    line.visible = false;
+                    line.visible = false
                     return
                 }
 
                 if (line.visible == false) {
-                    line.visible = true;
+                    line.visible = true
                 }
 
                 setTimeout(() => {
@@ -357,119 +445,31 @@ export default {
                         .start()
                 }, lineIndex * delay)
                 
-            });
-        },
-        createLines(update = false) {
-            this.cuboidLines.length = 0;
-            let horizontal, horSize, vertSize, lineData;
-
-            for (var i=0; i<this.amountOfLines; i++) {
-                lineData = {
-                    start: {
-                        x: 0,
-                        y: 0,
-                    },
-                    end: {
-                        x: 0,
-                        y: 1,
-                    },
-                    color: `#ff0066`,
-                    thickness: this.lineThickness
-                };
-                
-                lineData.side = this.sides[Math.floor(Math.random()*this.sides.length)]
-                horizontal = Math.random() < 0.5;
-                if (lineData.side == 'front' || lineData.side == 'back') {
-                    horSize = this.cube.width;
-                    vertSize = this.cube.height;
-                } else if (lineData.side == 'left' || lineData.side == 'right') {
-                    horSize = this.cube.depth;
-                    vertSize = this.cube.height;
-                } else {
-                    horSize = this.cube.width;
-                    vertSize = this.cube.depth;
-                } 
-
-                if (horizontal) {
-                    lineData.start.x = Math.floor(Math.random() * horSize);
-                    lineData.end.x = lineData.start.x
-
-                    lineData.start.y = Math.floor(Math.random() * vertSize);
-                    lineData.end.y = lineData.start.y;
-                    
-                    while(lineData.end.x == lineData.start.x) {
-                        lineData.end.x = Math.floor(Math.random() * horSize);
-                    }
-                } else {
-                    lineData.start.x = Math.floor(Math.random() * horSize);
-                    lineData.end.x = lineData.start.x
-
-                    lineData.start.y = Math.floor(Math.random() * vertSize);
-                    lineData.end.y = lineData.start.y;
-                    
-                    while(lineData.end.y == lineData.start.y) {
-                        lineData.end.y = Math.floor(Math.random() * vertSize);
-                    }
-                }
-                var line = Line.create(lineData, this.cube);
-
-                line.rotation.setFromVector3( line.data.rotation );
-                line.position.copy( line.data.position );
-                line.scale.copy( line.data.scale );
-                
-                this.cuboidLines.push(line);
-            }
-
-            if(update){
-                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
-                three.camera.lookAt(three.controls.target)
-                this.createHelperCube()
-                this.updateLines()
-            }
-            
+            })
         },
         toggleHelperCube() {
-            var helperCube = _.find(three.scene.children, {name:"helper-cube"});
+            var helperCube = _.find(three.scene.children, {name:"helper-cube"})
             helperCube.visible = this.helperCubeVisibility
         },
-    },
-    mounted() {
-        this.init();
+        updateMaxLines() {
+            if (this.cuboidLines.length>this.maxLines) {
+                this.cuboidLines.length = this.maxLines
+                this.amountOfLines = this.maxLines
+            }
+            this.createCuboid(true)
+        },
+        updateThickness() {
+            var cube = _.find(three.scene.children, {name: "cube"})
+            _.each(this.cuboidLines, (cuboidLine, lineIndex) => {
+                cuboidLine.data.thickness = this.lineThickness
+                cuboidLine.data.length = Line.getLength(cuboidLine)
 
-        // Prevent multiple camera's / meshes to be added
-        if (three.scene.initialised) {
-            this.mesh = _.find(three.scene.children, {type:"Mesh"});
-            return;
-        }
-        // Everything below will only be added the first time that this component is mounted
-
-
-        // Set camera in front position
-        three.camera.position.z = this.cube.depth*4
-        three.camera.position.y = this.cube.height/2
-        three.camera.position.x = this.cube.width/2
-        three.camera.lookAt(this.cube.width/2, this.cube.height/2, this.cube.depth/2)
-        three.scene.add(three.camera)
-        
-        const cube = new THREE.Group();
-        cube.name = 'cube';
-        three.scene.add(cube);
-
-
-        
-        this.createHelperCube()
-        this.createCuboid()
-        this.createLines(true)
-        this.toggleHelperCube()
-
-
-        three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2);
-        three.camera.lookAt(three.controls.target)
-        three.scene.initialised = true;
-    },
-    unmounted() {
-        // This destroys the animation loop when navigating to another page
-        this.animation = false;
+                new TWEEN.Tween( cube.children[lineIndex].scale  )   
+                    .to( Line.getScale(cuboidLine), this.transitionDuration )
+                    .easing( this.transitionTypes[this.transitionType] )
+                    .start()
+            })
+        },
     }
 }
 </script>

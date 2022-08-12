@@ -66,11 +66,11 @@
 
 
 <script>
-import * as THREE from 'three';
-import _ from 'lodash';
+import * as THREE from "three"
+import _ from "lodash"
 
-import Stats from './../../../node_modules/three/examples/jsm/libs/stats.module.js';
-import view from './../../services/3d-view.js';
+import Stats from "./../../../node_modules/three/examples/jsm/libs/stats.module.js"
+import view from "./../../services/3d-view.js"
 
 var three = view.init({orbitControls: true})
 
@@ -87,78 +87,18 @@ export default {
             point3: [0,1,1],
         }
     },
-    methods: {
-        init(){
-            // Rendering scene
-            var that = this;
-            function animate(index) {
-                if (!that.animation) {
-                    return;
-                }
-                three.renderer.render(three.scene, three.camera);
-
-                stats.update();
-
-                requestAnimationFrame(animate);
-            }
-
-            // Helper for displaying FPS
-            var stats = new Stats();
-            stats.dom.className = "viewport-stats"
-            this.$el.querySelector(".viewport-content").append( stats.dom );
-
-
-            // Enable animation loop
-            this.animation = true;
-            animate();
-
-            // Add scene to dom
-            this.$el.querySelector(".viewport-content").append(three.renderer.domElement );
-
-            // Helper function for updating scene on screen resizing
-            window.addEventListener('resize', () => {this.updateCanvasSize(three.camera, three.renderer)});
-            window.dispatchEvent(new Event("resize"));
-        },
-        updateCanvasSize(camera, renderer) {
-            var width = this.$el.clientWidth;
-            var height = this.$el.clientWidth;
-
-            renderer.setSize( width, height);
-            camera.bottom = -height;
-            camera.top = height;
-            camera.left = -width;
-            camera.right = width;
-
-            camera.updateProjectionMatrix();
-        },
-        toggleWireframe() {
-            var obj = _.find(three.scene.children, {type:"Mesh"});
-
-            if (this.wireframe) {
-                obj.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true});
-            } else {
-                obj.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false});
-            }
-        },
-        updateTriangle() {
-            var positions = [].concat(this.point1, this.point2, this.point3)
-
-            this.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
-            this.geometry.computeVertexNormals();
-        }
-    },
     mounted() {
-        this.init();
+        this.init()
 
         // Prevent multiple camera's / meshes to be added
         if (three.scene.initialised) {
-            this.geometry = _.find(three.scene.children, {type:"Mesh"}).geometry;
-            var pos = this.geometry.getAttribute("position").array;
+            this.geometry = _.find(three.scene.children, {type:"Mesh"}).geometry
+            var pos = this.geometry.getAttribute("position").array
 
-            this.point1 = [pos[0],pos[1],pos[2]];
-            this.point2 = [pos[3],pos[4],pos[5]];
-            this.point3 = [pos[6],pos[7],pos[8]];
-            return;
+            this.point1 = [pos[0],pos[1],pos[2]]
+            this.point2 = [pos[3],pos[4],pos[5]]
+            this.point3 = [pos[6],pos[7],pos[8]]
+            return
         }
         // Everything below will only be added the first time that this component is mounted
 
@@ -171,18 +111,78 @@ export default {
         three.scene.add(three.camera)
 
         // Create object
-        this.geometry = new THREE.BufferGeometry();
-        var mesh = new THREE.Mesh(this.geometry);
-        three.scene.add(mesh);
-        this.toggleWireframe();
-        this.updateTriangle();
+        this.geometry = new THREE.BufferGeometry()
+        var mesh = new THREE.Mesh(this.geometry)
+        three.scene.add(mesh)
+        this.toggleWireframe()
+        this.updateTriangle()
 
 
-        three.scene.initialised = true;
+        three.scene.initialised = true
     },
     unmounted() {
         // This destroys the animation loop when navigating to another page
-        this.animation = false;
+        this.animation = false
+    },
+    methods: {
+        init(){
+            // Rendering scene
+            var that = this
+            function animate(index) {
+                if (!that.animation) {
+                    return
+                }
+                three.renderer.render(three.scene, three.camera)
+
+                stats.update()
+
+                requestAnimationFrame(animate)
+            }
+
+            // Helper for displaying FPS
+            var stats = new Stats()
+            stats.dom.className = "viewport-stats"
+            this.$el.querySelector(".viewport-content").append( stats.dom )
+
+
+            // Enable animation loop
+            this.animation = true
+            animate()
+
+            // Add scene to dom
+            this.$el.querySelector(".viewport-content").append(three.renderer.domElement )
+
+            // Helper function for updating scene on screen resizing
+            window.addEventListener("resize", () => {this.updateCanvasSize(three.camera, three.renderer)})
+            window.dispatchEvent(new Event("resize"))
+        },
+        updateCanvasSize(camera, renderer) {
+            var width = this.$el.clientWidth
+            var height = this.$el.clientWidth
+
+            renderer.setSize( width, height)
+            camera.bottom = -height
+            camera.top = height
+            camera.left = -width
+            camera.right = width
+
+            camera.updateProjectionMatrix()
+        },
+        toggleWireframe() {
+            var obj = _.find(three.scene.children, {type:"Mesh"})
+
+            if (this.wireframe) {
+                obj.material = new THREE.MeshBasicMaterial({color: 0xff0066, wireframe: true})
+            } else {
+                obj.material = new THREE.MeshLambertMaterial({color: 0xff0066, wireframe: false})
+            }
+        },
+        updateTriangle() {
+            var positions = [].concat(this.point1, this.point2, this.point3)
+
+            this.geometry.setAttribute( "position", new THREE.Float32BufferAttribute( positions, 3 ) )
+            this.geometry.computeVertexNormals()
+        }
     }
 }
 </script>
