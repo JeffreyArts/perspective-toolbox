@@ -30,7 +30,7 @@ const Line  = {
         }
 
         const geometry = new THREE.BoxGeometry(1,1,1)
-        const lineObject = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: line.color, wireframe: false}))
+        const lineObject = new THREE.Mesh(geometry)
         lineObject.data = line
         lineObject.data.length = Line.getLength(lineObject)
         lineObject.data.position = Line.getPosition(lineObject, cube)

@@ -1,0 +1,33 @@
+.loader {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(255,255,255,.8);
+    z-index: 1;
+    transform-origin: center;
+    transition: .32s all ease;
+    text-align: center;
+
+    &.__isHidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    &:after {
+        content: ".";
+        position: absolute;
+        left: calc(50% - 64px);
+        top: calc(50% - 64px);
+        font-size: 128px;
+        display: block;
+        transform-origin: center;
+        width: 128px;
+        height: 128px;
+        line-height: 1px;
+        z-index: 1;
+        color: $accentColor;
+        animation: loadingAnimation 1.6s infinite;
+    }
+}

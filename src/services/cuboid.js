@@ -53,7 +53,7 @@ const algorithmConfig = {
 }
 
 const Cuboid  = {
-    create: (cubeDimensions = {width: 0, height:0, depth:0}, cuboidProps = {maxLines: 1024, name: "cuboid"}) => {
+    create: (cubeDimensions = {width: 0, height:0, depth:0}, cuboidProps = {maxLines: 1024, name: "cuboid", color: "#000000"}) => {
         
         if (cubeDimensions.width == 0 && cubeDimensions.heigh == 0 && cubeDimensions.depth == 0){
             console.error("Missing required 1st parameter 'cubeDimensions'")
@@ -65,6 +65,7 @@ const Cuboid  = {
         }   
         
         const cuboid = new THREE.Group()
+        cuboid.material = new THREE.MeshLambertMaterial({color: cuboidProps.color, wireframe: false})
         cuboid.name = cuboidProps.name
         
         const lineData = Line.getLineDataObject()
@@ -76,10 +77,11 @@ const Cuboid  = {
                 height: cubeDimensions.height, 
                 depth: cubeDimensions.depth
             })
-            cuboid.add(line)
             line.rotation.setFromVector3( line.data.rotation )
             line.position.copy( line.data.position )
             line.scale.copy( line.data.scale )
+            line.material = cuboid.material
+            cuboid.add(line)
         }
 
         return cuboid
@@ -358,7 +360,11 @@ const Cuboid  = {
 
             // Add Side
             _.each(polylines, polyline => {
-                cuboidLines.push(Line.update(lineData, {polyline: polyline, side: side, thickness: lineData.lineThickness}, cubeDimensions))
+                var line = Line.update(lineData, {polyline: polyline, side: side, thickness: lineData.lineThickness}, cubeDimensions)
+
+                line.position.x -= (cubeDimensions.width - 1 ) /2
+                line.position.z -= (cubeDimensions.depth - 1 ) /2
+                cuboidLines.push(line)
             })
         })
         
@@ -379,7 +385,6 @@ const Cuboid  = {
 
         
         _.each(cuboid.children, (line, lineIndex) => {
-
             if (!props.cuboidLines[lineIndex]) {
                 line.visible = false
                 return
@@ -389,12 +394,16 @@ const Cuboid  = {
             if (line.visible == false) {
                 line.visible = true
             }
+            
+            // Update data property
+            cuboid.children[lineIndex].data = props.cuboidLines[lineIndex].data
 
             setTimeout(() => {
                 new TWEEN.Tween( cuboid.children[lineIndex].scale  )   
                     .to( props.cuboidLines[lineIndex].scale, props.duration )
                     .easing( props.transition )
                     .start()
+                    .onComplete()
 
                 new TWEEN.Tween( cuboid.children[lineIndex].position  )   
                     .to( props.cuboidLines[lineIndex].position, props.duration )
@@ -417,7 +426,6 @@ const Cuboid  = {
         for (let i = cuboid.children.length - 1; i >= 0; i--) {
             if(cuboid.children[i].type === "Mesh") {
                 cuboid.children[i].geometry.dispose()
-                cuboid.children[i].material.dispose()
             }
             cuboid.remove(cuboid.children[i])
         }

@@ -6,6 +6,7 @@ import CreateFace from "./create-face/create-face.vue"
 import CreateTriangle from "./create-triangle/create-triangle.vue"
 import ConvexGeometry from "./convex-geometry/convex-geometry.vue"
 import Cuboid from "./cuboid/cuboid.vue"
+import CuboidMap from "./cuboid-map/cuboid-map.vue"
 import DepthOfField from "./depth-of-field/depth-of-field.vue"
 import DrawLineFromCoordinates from "./draw-line-from-coordinates/draw-line-from-coordinates.vue"
 import LineAnimationPerformance from "./line-animation-performance/line-animation-performance.vue"
@@ -45,6 +46,11 @@ const routes = [
         path: "/cuboid",
         name: "Cuboid",
         component: Cuboid,
+    },
+    {
+        path: "/cuboid-map",
+        name: "Cuboid map",
+        component: CuboidMap,
     },
     {
         path: "/depth-of-field",
