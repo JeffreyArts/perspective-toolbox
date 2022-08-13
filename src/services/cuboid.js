@@ -2,6 +2,7 @@ import _ from "lodash"
 import * as THREE from "three"
 import Line from "./line.js"
 import {PolylineAlgorithm} from "visual-pattern-generator"
+import TWEEN from "@tweenjs/tween.js"
 
 /* cuboidProps = object {
     width: 5,
@@ -52,21 +53,23 @@ const algorithmConfig = {
 }
 
 const Cuboid  = {
-    create: (cubeDimensions, cuboidProps) => {
-        if (!cuboidProps.maxLines) {
-            cuboidProps.maxLines = 1024
-            console.warn("Missing maxLines property on Cuboid.create method, defaulting to 1024")
+    create: (cubeDimensions = {width: 0, height:0, depth:0}, cuboidProps = {maxLines: 1024, name: "cuboid"}) => {
+        
+        if (cubeDimensions.width == 0 && cubeDimensions.heigh == 0 && cubeDimensions.depth == 0){
+            console.error("Missing required 1st parameter 'cubeDimensions'")
+            return
         }
-        if (!cuboidProps.name) {
-            cuboidProps.name = "cuboid"
-            console.warn("Missing name property on Cuboid.create method, defaulting to 'cuboid'")
-        }
+        if (cuboidProps.maxLines <= 0 || !cuboidProps.maxLines){
+            console.error("Missing required property 'maxLines' for 2nd paramater 'cuboidProps'")
+            return
+        }   
+        
         const cuboid = new THREE.Group()
         cuboid.name = cuboidProps.name
+        
         const lineData = Line.getLineDataObject()
-
         let line = null
-
+        
         for (let index = 0; index < cuboidProps.maxLines; index++) {
             line = Line.create(lineData, {
                 width: cubeDimensions.width, 
@@ -78,31 +81,16 @@ const Cuboid  = {
             line.position.copy( line.data.position )
             line.scale.copy( line.data.scale )
         }
-            
-        // three.controls.target.set((width-1)/2, (height-1)/2, (depth-1)/2)
-        // three.camera.lookAt(three.controls.target)
-        
-        if (cuboidProps.helperCube) {
-            Cuboid.createHelperCube()
-        }
+
         return cuboid
     },
-    createHelperCube: (name, cubeDimensions) => {
+    createHelperCube: (cubeDimensions, helperCubeProps = {name: "helper-cube"}) => {
+        if (cubeDimensions.width == 0 && cubeDimensions.heigh == 0 && cubeDimensions.depth == 0){
+            console.error("Missing required property 'cubeDimensions'")
+            return
+        }
         const helperCube = new THREE.Group()
-        helperCube.name = name
-        // var helperCube = _.find(three.scene.children, {name: "helper-cubeDimensions"})
-        // if (!helperCube) {
-        //     three.scene.add(helperCube)
-        // }
-
-        // for (let i = helperCube.children.length - 1; i >= 0; i--) {
-        //     if(helperCube.children[i].type === "Mesh") {
-        //         helperCube.children[i].geometry.dispose()
-        //         helperCube.children[i].material.dispose()
-        //     }
-        //     helperCube.remove(helperCube.children[i])
-        // }
-        
+        helperCube.name = helperCubeProps.name
 
         let sphere = new THREE.Mesh(new THREE.SphereGeometry( 0.01, 32, 16 ), new THREE.MeshBasicMaterial({color: 0xcccccc, wireframe: true}))
         
@@ -156,6 +144,15 @@ const Cuboid  = {
         }
         return helperCube
     },   
+    get: (nameOrId, scene) => {
+        let cuboid = _.find(scene.children, {name: nameOrId})
+
+        if (!cuboid) {
+            cuboid = _.find(scene.children, {UUID: nameOrId})
+        }
+
+        return cuboid
+    },
     generateCuboidLines: (cubeDimensions = {width:0, height:0, depth:0}, type, seed) => {
         const cuboidLines = []         
         const lineData = {
@@ -167,7 +164,8 @@ const Cuboid  = {
             rotation: {},
             position: {}
         }
-        let query, queryPlaceholder
+        let query
+        const queryPlaceholder = {}
 
 
 
@@ -369,12 +367,12 @@ const Cuboid  = {
             return `${cl.position.x}, ${cl.position.y}, ${cl.position.z}, ${cl.data.length}`
         })
     },
-    updateCuboid: (cuboid, props = {delay: 0, cuboidLines: [], transition: null, duration: null}) => {
-        if (_.isNull(prop.transition)) {
+    update: (cuboid, props = {delay: 0, cuboidLines: [], transition: null, duration: null}) => {
+        if (_.isNull(props.transition)) {
             console.error("Missing required `transition` property for updateCuboid, should be a tween transition function")
             return
         }
-        if (_.isNull(prop.duration)) {
+        if (_.isNull(props.duration)) {
             console.error("Missing required `duration` property for updateCuboid, should be number in miliseconds")
             return
         }
@@ -382,7 +380,7 @@ const Cuboid  = {
         
         _.each(cuboid.children, (line, lineIndex) => {
 
-            if (!prop.cuboidLines[lineIndex]) {
+            if (!props.cuboidLines[lineIndex]) {
                 line.visible = false
                 return
             }
@@ -394,28 +392,28 @@ const Cuboid  = {
 
             setTimeout(() => {
                 new TWEEN.Tween( cuboid.children[lineIndex].scale  )   
-                    .to( prop.cuboidLines[lineIndex].scale, duration )
-                    .easing( transition )
+                    .to( props.cuboidLines[lineIndex].scale, props.duration )
+                    .easing( props.transition )
                     .start()
 
                 new TWEEN.Tween( cuboid.children[lineIndex].position  )   
-                    .to( prop.cuboidLines[lineIndex].position, duration )
-                    .easing( transition )
+                    .to( props.cuboidLines[lineIndex].position, props.duration )
+                    .easing( props.transition )
                     .start()                    
 
                 new TWEEN.Tween(cuboid.children[lineIndex].rotation)   
                     .to({
-                        x: prop.cuboidLines[lineIndex].rotation.x,
-                        z: prop.cuboidLines[lineIndex].rotation.z,
-                        y: prop.cuboidLines[lineIndex].rotation.y
-                    }, duration )
-                    .easing( transition )
+                        x: props.cuboidLines[lineIndex].rotation.x,
+                        z: props.cuboidLines[lineIndex].rotation.z,
+                        y: props.cuboidLines[lineIndex].rotation.y
+                    }, props.duration )
+                    .easing( props.transition )
                     .start()
             }, lineIndex * props.delay)
-            
         })
+            
     },
-    removeCuboid: (cuboid) => {
+    remove: (cuboid) => {
         for (let i = cuboid.children.length - 1; i >= 0; i--) {
             if(cuboid.children[i].type === "Mesh") {
                 cuboid.children[i].geometry.dispose()
@@ -427,4 +425,4 @@ const Cuboid  = {
     },
 }
 
-export default Line
+export default Cuboid

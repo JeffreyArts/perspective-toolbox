@@ -18,13 +18,13 @@
                         <label for="far">
                             Line thickness
                         </label>
-                        <input type="range" id="far" v-model.number="lineThickness" step=".01" min="0.01" max="1" @change="updateThickness()">
-                        <input type="number" step=".01" min="0" max="1" v-model.number="lineThickness" @change="updateThickness()">
+                        <input type="range" id="far" v-model.number="lineThickness" step=".01" min="0.01" max="1" @change="updateLineThickness()">
+                        <input type="number" step=".01" min="0" max="1" v-model.number="lineThickness" @change="updateLineThickness()">
                     </div>
                     <div class="option">
                         <label for="transitionType">
                             Sensitivity
-                            <select name="transitionType" v-model="sensitivity" @change="updateQuery(sensitivity,true)">
+                            <select name="transitionType" v-model="sensitivity" @change="updateCuboid()">
                                 <option v-for="(s,i) in sensitivityScales" :value="s" :key="i">{{s}}</option>
                             </select>
                         </label>
@@ -32,7 +32,7 @@
                     <div class="option">
                         <label for="seed">
                             Seed
-                            <input type="number" id="seed" v-model="seed" @change="updateSeed(true)">
+                            <input type="number" id="seed" v-model="seed" @change="updateCuboid(true)">
                         </label>
                         <label for="delay">
                             Delay
@@ -51,9 +51,9 @@
                         </label>
 
                         <div class="group">
-                            <input type="number" id="cubeWidth" v-model.number="cube.width" step="1" min="3" max="16" @change="createCuboid(true)">
-                            <input type="number" id="cubeHeight" v-model.number="cube.height" step="1" min="3" max="16" @change="createCuboid(true)">
-                            <input type="number" id="cubeDepth" v-model.number="cube.depth" step="1" min="3" max="16" @change="createCuboid(true)">
+                            <input type="number" id="cubeWidth" v-model.number="cubeDimensions.width" step="1" min="3" max="16" :disabled="sensitivity!='custom'" @change="createCuboid(true)">
+                            <input type="number" id="cubeHeight" v-model.number="cubeDimensions.height" step="1" min="3" max="16" :disabled="sensitivity!='custom'" @change="createCuboid(true)">
+                            <input type="number" id="cubeDepth" v-model.number="cubeDimensions.depth" step="1" min="3" max="16" :disabled="sensitivity!='custom'" @change="createCuboid(true)">
                         </div>
                     </div>
                     
@@ -75,7 +75,6 @@
                     <hr />
                     
                     <div class="option">
-                        <!-- <label>Wireframe</label>÷ -->
                         <span>
                             <input type="checkbox" id="checkbox-v0" v-model="helperCubeVisibility" v-on:change="toggleHelperCube()">
                             <label for="checkbox-v0">
@@ -103,44 +102,6 @@ import Line from "../../services/line.js"
 import Cuboid from "../../services/cuboid.js"
 
 var three = view.init({orbitControls: true})
-var symbols = [
-    {
-        polylines: [
-            [{x:0, y:0},{ x:1, y:0}]
-        ],
-        connectCords: [
-            {x:0, y:0},
-            {x:1, y:0}
-        ],
-        width:2,
-        height:1
-    },
-    {
-        polylines: [
-            [{x:0, y:0},{ x:0, y:1}]
-        ],
-        connectCords: [
-            {x:0, y:0},
-            {x:0, y:1}
-        ],
-        width:1,
-        height:2
-    }
-]
-
-const algorithmConfig = {
-    width: 5,
-    height: 5,
-    symbols: symbols,
-    algorithm: {
-        type: "polylines",
-        startPoint: {x:0, y:0},
-        mirrorX: 1,
-        mirrorY: 1,
-        drawConnectLines: true
-    }
-}
-
 
 export default {
     name: "cuboidVariationsTest",
@@ -154,9 +115,9 @@ export default {
             delay: 0,
             seed: Math.floor(Math.random()*9000+1000).toString(),
             sensitivity: "abstract",
-            sensitivityScales: ["abstract","non-identity","identity","open"],
+            sensitivityScales: ["abstract","non-identity","identity","open", "custom"],
             sides: ["left","right","front","back","top","bottom"],
-            cube: {
+            cubeDimensions: {
                 width: 5,
                 height: 5,
                 depth: 5,
@@ -218,28 +179,19 @@ export default {
 
 
         // Set camera in front position
-        three.camera.position.z = this.cube.depth*4
-        three.camera.position.y = this.cube.height/2
-        three.camera.position.x = this.cube.width/2
-        three.camera.lookAt(this.cube.width/2, this.cube.height/2, this.cube.depth/2)
+        three.camera.position.z = this.cubeDimensions.depth*4
+        three.camera.position.y = this.cubeDimensions.height/2
+        three.camera.position.x = this.cubeDimensions.width/2
+        three.camera.lookAt(this.cubeDimensions.width/2, this.cubeDimensions.height/2, this.cubeDimensions.depth/2)
         three.scene.add(three.camera)
-        
-        const cube = new THREE.Group()
-        cube.name = "cube"
-        three.scene.add(cube)
-        
-        
-        this.createHelperCube()
+
+        // Helper Cuboid
         this.createCuboid()
-
-        this.updateQuery(this.sensitivity)
-        this.generateCuboid()
-
+        
+        // Helper cube
+        var helperCube = Cuboid.createHelperCube(this.cubeDimensions, {name: "helper-cube"})
+        three.scene.add(helperCube)
         this.toggleHelperCube()
-
-
-        three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2)
-        three.camera.lookAt(three.controls.target)
         three.scene.initialised = true
     },
     unmounted() {
@@ -291,415 +243,56 @@ export default {
 
             camera.updateProjectionMatrix()
         },
-        createCuboid(update = false) {
-            const cube = _.find(three.scene.children, {name: "cube"})
-
-            // Clean cube
-            for (let i = cube.children.length - 1; i >= 0; i--) {
-                if(cube.children[i].type === "Mesh") {
-                    cube.children[i].geometry.dispose()
-                    cube.children[i].material.dispose()
-                }
-                cube.remove(cube.children[i])
-            }
-            
-            const lineData = {
-                start: {
-                    x: 0,
-                    y: 0,
-                },
-                end: {
-                    x: 0,
-                    y: 0,
-                },
-                color:"#ff0066",
-                thickness: this.lineThickness,
-                length: 0,
-                rotation: {},
-                position: {}
+        createCuboid() {
+   
+            const oldCuboid = Cuboid.get("cuboid", three.scene)
+            if (oldCuboid) {
+                Cuboid.remove(oldCuboid)
             }
 
-            let line = null
+            const newCuboid = Cuboid.create(this.cubeDimensions, {name: "cuboid", maxLines: 1024})
+            three.scene.add(newCuboid)
 
-            for (let index = 0; index < 1024; index++) {
-                line = Line.create(lineData, this.cube)
-                cube.add(line)
-                line.rotation.setFromVector3( line.data.rotation )
-                line.position.copy( line.data.position )
-                line.scale.copy( line.data.scale )
-            }
-            
-            this.updateQuery()
-            if (update) {
-                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2)
-                three.camera.lookAt(three.controls.target)
-                this.createHelperCube()
-                this.generateCuboid()
-                this.updateLines(this.delay)
-            }
-        },
-        createHelperCube() {
+            this.cuboidLines = Cuboid.generateCuboidLines(this.cubeDimensions, this.sensitivity, this.seed)
 
-            var helperCube = _.find(three.scene.children, {name: "helper-cube"})
-            if (!helperCube) {
-                helperCube = new THREE.Group()
-                helperCube.name = "helper-cube"
-                three.scene.add(helperCube)
-            }
-
-            for (let i = helperCube.children.length - 1; i >= 0; i--) {
-                if(helperCube.children[i].type === "Mesh") {
-                    helperCube.children[i].geometry.dispose()
-                    helperCube.children[i].material.dispose()
-                }
-                helperCube.remove(helperCube.children[i])
-            }
-            
-
-            let sphere = new THREE.Mesh(new THREE.SphereGeometry( 0.01, 32, 16 ), new THREE.MeshBasicMaterial({color: 0xcccccc, wireframe: true}))
-            
-            for (var x=0; x<this.cube.width; x++) {
-                for (var y=0; y<this.cube.height; y++) {
-
-                    // Back
-                    sphere.position.x = x
-                    sphere.position.y = y
-                    sphere.position.z = 0
-                    helperCube.add(sphere.clone())
-
-                    // Front
-                    sphere.position.x = x
-                    sphere.position.y = y
-                    sphere.position.z = this.cube.depth-1
-                    helperCube.add(sphere.clone())
-                }
-            }
-            
-            for (var x=0; x<this.cube.depth; x++) {
-                for (var y=0; y<this.cube.height; y++) {
-                    // Left
-                    sphere.position.x = 0
-                    sphere.position.y = y
-                    sphere.position.z = x
-                    helperCube.add(sphere.clone())
-
-                    // Right
-                    sphere.position.x = this.cube.width-1
-                    sphere.position.y = y
-                    sphere.position.z = x
-                    helperCube.add(sphere.clone())
-                }
-            }
-            
-            for (var x=0; x<this.cube.width; x++) {
-                for (var y=0; y<this.cube.depth; y++) {
-                    // Bottom
-                    sphere.position.x = x
-                    sphere.position.y = 0
-                    sphere.position.z = y
-                    helperCube.add(sphere.clone())
-
-                    // Top
-                    sphere.position.x = x
-                    sphere.position.y = this.cube.height-1
-                    sphere.position.z = y
-                    helperCube.add(sphere.clone())
-                }
-            }
-            console.log(helperCube)
-        },
-        updateLines(delay = 16) {
-            const cube = _.find(three.scene.children, {name: "cube"})
-            this.cuboidLines = _.shuffle(this.cuboidLines)
-
-            _.each(cube.children, (line, lineIndex) => {
-                if (!this.cuboidLines[lineIndex]) {
-                    line.visible = false
-                    return
-                }
-
-                if (line.visible == false) {
-                    line.visible = true
-                }
-
-                setTimeout(() => {
-                    new TWEEN.Tween( cube.children[lineIndex].scale  )   
-                        .to( this.cuboidLines[lineIndex].scale, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()
-
-                    new TWEEN.Tween( cube.children[lineIndex].position  )   
-                        .to( this.cuboidLines[lineIndex].position, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()                    
-
-                    new TWEEN.Tween(cube.children[lineIndex].rotation)   
-                        .to({
-                            x: this.cuboidLines[lineIndex].rotation.x,
-                            z: this.cuboidLines[lineIndex].rotation.z,
-                            y: this.cuboidLines[lineIndex].rotation.y
-                        }, this.transitionDuration )
-                        .easing( this.transitionTypes[this.transitionType] )
-                        .start()
-                }, lineIndex * delay)
-                
+            Cuboid.update(newCuboid, {
+                delay: this.delay, 
+                cuboidLines: this.cuboidLines,
+                transition: this.transitionTypes[this.transitionType], 
+                duration: this.transitionDuration
             })
+            three.controls.target.set((this.cubeDimensions.width-1)/2, (this.cubeDimensions.height-1)/2, (this.cubeDimensions.depth-1)/2)
+            three.camera.lookAt(three.controls.target)
         },
-        updateSeed() {
-            _.each(this.query, side => {
-                side.seed = this.seed
+        updateCuboid() {
+            const cuboid = Cuboid.get("cuboid", three.scene)
+            this.cuboidLines = Cuboid.generateCuboidLines(this.cubeDimensions, this.sensitivity, this.seed)
+            Cuboid.update(cuboid, {
+                delay: this.delay, 
+                cuboidLines: this.cuboidLines,
+                transition: this.transitionTypes[this.transitionType], 
+                duration: this.transitionDuration
             })
-            // This will update the mask(s) of the query collection
-            // this.updateQuery(this.sensitivity)
-            this.generateCuboid()
+            three.controls.target.set((this.cubeDimensions.width-1)/2, (this.cubeDimensions.height-1)/2, (this.cubeDimensions.depth-1)/2)
+            three.camera.lookAt(three.controls.target)
         },
-        updateQuery(sensitivity,update) {
-            
-            if (sensitivity == "abstract") {
-                this.cube.width = 5
-                this.cube.height = 5
-                this.cube.depth = 5
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.height,
-                })
-                var masks = [[
-                    [1,0,0,0,1],
-                    [0,0,0,0,0],
-                    [0,1,1,1,0],
-                    [0,0,0,0,0],
-                    [1,0,0,0,1],
-                ], [
-                    [1,0,0,0,1],
-                    [0,0,0,0,0],
-                    [0,0,1,0,0],
-                    [0,0,0,0,0],
-                    [1,0,0,0,1],
-                ]]
-                _.merge(query.algorithm, {
-                    mirrorX: 1,
-                    mirrorY: 1,
-                    mask: masks[Math.round(Math.random())]
-                })
-
-                this.query.left = _.merge({},query)
-                this.query.right = _.merge({},query)
-
-                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-
-                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-            } else if (sensitivity == "non-identity") {
-                this.cube.width = 5
-                this.cube.height = 5
-                this.cube.depth = 5
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.height,
-                })
-                _.merge(query.algorithm, {
-                    mirrorX: 1,
-                    mirrorY: 1,
-                    mask: null
-                })
-
-                this.query.left = _.merge({},query)
-                this.query.right = _.merge({},query)
-
-                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-
-                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-            } else if (sensitivity == "identity") {
-                this.cube.width = 5
-                this.cube.height = 5
-                this.cube.depth = 5
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.height,
-                })
-
-                _.merge(query.algorithm, {
-                    mirrorX: Math.round(Math.random()) + 1,
-                    mirrorY: 0,
-                    mask: null
-                })
-
-                this.query.left = _.merge({},query)
-                this.query.right = _.merge({},query)
-
-                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-
-
-                _.merge(query.algorithm, {
-                    mirrorX: 1,
-                    mirrorY: 1,
-                    mask: null
-                })
-
-                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-            } else if (sensitivity == "open") {
-                this.cube.width = 7
-                this.cube.height = 7
-                this.cube.depth = 7
-                
-                query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.width, 
-                    height: this.cube.height,
-                })
-
-                var masks = [[
-                    [1,0,0,0,0,0,1],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [1,0,0,0,0,0,1],
-                ], [
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                ], [
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,1,0,0,0],
-                    [0,0,1,1,1,0,0],
-                    [0,0,0,1,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                ], [
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,1,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                ], [
-                    [0,0,0,1,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [1,0,0,0,0,0,1],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,0,0,0,0],
-                    [0,0,0,1,0,0,0],
-                ]]
-                var index = Math.round(Math.random()*(masks.length - 1))
-                
-                _.merge(query.algorithm, {
-                    mirrorX: 1,
-                    mirrorY: 1,
-                    mask: masks[index]
-                })
-
-                this.query.left = _.merge({},query)
-                this.query.right = _.merge({},query)
-
-                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-
-                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-            } else  {
-                var query = _.merge({},algorithmConfig, {
-                    seed: this.seed, 
-                    width: this.cube.depth, 
-                    height: this.cube.height,
-                })
-                _.merge(query.algorithm, {
-                    mirrorX: 1,
-                    mirrorY: 1,
-                    mask: null
-                })
-
-                this.query.left = _.merge({},query)
-                this.query.right = _.merge({},query)
-
-                this.query.top = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-                this.query.bottom = _.merge({},query, { width: this.cube.width,  height: this.cube.depth})
-
-                this.query.front = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-                this.query.back = _.merge({},query, { width: this.cube.width,  height: this.cube.height})
-            }
-
-            if (update) {
-                this.generateCuboid()
-            }
-        },
-        updateThickness() {
-            var cube = _.find(three.scene.children, {name: "cube"})
+        updateLineThickness() {
+            const cuboid = Cuboid.get("cuboid", three.scene)
             _.each(this.cuboidLines, (cuboidLine, lineIndex) => {
                 // var newLine = Line.create(_.merge({},cuboidLine, cuboidLine.data, {thickness: this.lineThickness}), this.cube);
                 cuboidLine.data.thickness = this.lineThickness
                 cuboidLine.data.length = Line.getLength(cuboidLine)
                 var newScale = Line.getScale(cuboidLine)
-                // cuboidLine.scale.copy( newLine.scale );
 
-                new TWEEN.Tween( cube.children[lineIndex].scale  )   
+                new TWEEN.Tween( cuboid.children[lineIndex].scale  )   
                     .to( newScale, this.transitionDuration )
                     .easing( this.transitionTypes[this.transitionType] )
                     .start()
             })
         },
-        updateLine(line) {
-        },
-        addSideToCuboidLines(query, side) {
-            var line = null
-            var polylines = PolylineAlgorithm(query).polylines
-            const lineData = {
-                color:"#ff0066",
-                thickness: this.lineThickness,
-                length: 0,
-                polyline: [],
-                scale: {},
-                rotation: {},
-                position: {}
-            }
-
-            // Add Side
-            _.each(polylines, polyline => {
-                this.cuboidLines.push(Line.update(lineData, {polyline: polyline, side: side,  thickness: this.lineThickness}, this.cube))
-            })
-        },
         toggleHelperCube() {
-            var helperCube = _.find(three.scene.children, {name:"helper-cube"})
-            this.createHelperCube()
+            const helperCube = Cuboid.get("helper-cube", three.scene)
             helperCube.visible = this.helperCubeVisibility
-        },
-        generateCuboid(updateHelperCube) {
-            this.cuboidLines.length = 0            
-            _.each(this.query, (query, side) => {
-                this.addSideToCuboidLines(query, side)
-            })
-
-            // Remove duplicates
-            this.cuboidLines = _.uniqBy(this.cuboidLines, (cl) => {
-                return `${cl.position.x}, ${cl.position.y}, ${cl.position.z}, ${cl.data.length}`
-            })
-
-            this.updateLines(this.delay)
-            if (updateHelperCube) {
-                this.createHelperCube()
-                three.controls.target.set((this.cube.width-1)/2, (this.cube.height-1)/2, (this.cube.depth-1)/2)
-                three.camera.lookAt(three.controls.target)
-            }
-
         },
     }
 }
