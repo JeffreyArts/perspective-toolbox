@@ -250,6 +250,23 @@ const Line  = {
 
         return result
     },
+    getLineDataObject: () => {
+        return {
+            start: {
+                x: 0,
+                y: 0,
+            },
+            end: {
+                x: 0,
+                y: 0,
+            },
+            color:"#ffffff",
+            thickness: .25,
+            length: 0,
+            rotation: {},
+            position: {}
+        }
+    },
 }
 
 export default Line

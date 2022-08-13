@@ -100,6 +100,7 @@ import TWEEN from "@tweenjs/tween.js"
 import Stats from "./../../../node_modules/three/examples/jsm/libs/stats.module.js"
 import view from "../../services/3d-view.js"
 import Line from "../../services/line.js"
+import Cuboid from "../../services/cuboid.js"
 
 var three = view.init({orbitControls: true})
 var symbols = [
@@ -405,6 +406,7 @@ export default {
                     helperCube.add(sphere.clone())
                 }
             }
+            console.log(helperCube)
         },
         updateLines(delay = 16) {
             const cube = _.find(three.scene.children, {name: "cube"})
