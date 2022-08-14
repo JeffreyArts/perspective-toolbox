@@ -1,11 +1,12 @@
 <template>
 
-    <div class="cuboid-map">
+    <div class="ortographic-cuboid">
         <header class="title">
-            <h1>Cuboid map</h1>
+            <h1>Orthographic cuboid</h1>
         </header>
 
         <hr>
+
         <section class="viewport">
             <div class="viewport-content" ratio="1x1">
                 <div class="loader" :class="[isLoading ? '' : '__isHidden']" />
@@ -19,33 +20,34 @@
                     <div class="option">
                         <label for="transitionType">
                             Sensitivity
-                            <select name="transitionType" v-model="sensitivity" @change="updateCuboid()">
+                            <select name="transitionType" v-model="sensitivity" @change="updateMap()">
                                 <option v-for="(s,i) in sensitivityScales" :value="s" :key="i">{{s}}</option>
                             </select>
                         </label>
                     </div>
-
-                    <!-- <div class="option">
-                        <button class="button" @click="updateLines(true)" >Shuffle Lines</button>
-                    </div> -->
                     
                     <div class="option">
                         <label for="transitionType">
                             Transition type
-                            <select name="transitionType" v-model="transitionType" >
+                            <select name="transitionType" v-model="transitionType" @change="updateMap()" >
                                 <option v-for="(tween, index) in transitionTypes" :value="index" :key="tween">{{index}}</option>
                             </select>
                         </label>
                     </div>
+
                     <div class="option">
                         <label for="transitionDuration">
                             Transition duration
-                            <input name="transitionDuration" v-model.number="transitionDuration" />
+                            <input name="transitionDuration" type="number" v-model.number="transitionDuration"  @change="updateMap()"/>
                         </label>
                     </div>
 
-                    <hr />
-                    
+                    <div class="option">
+                        <label for="delay">
+                            Delay
+                            <input name="delay" type="number" v-model.number="delay"  @change="updateMap()"/>
+                        </label>
+                    </div>
                 </div>
 
             </div>
@@ -56,8 +58,10 @@
 
 <script>
 import * as THREE from "three"
+import { OrbitControls } from "./../../../node_modules/three/examples/jsm/controls/OrbitControls.js"
+
 import _ from "lodash"
-import TWEEN from "@tweenjs/tween.js"
+import TWEEN, { Tween } from "@tweenjs/tween.js"
 import degreesToRadians from "../../services/degrees-to-radians.js"
 import { InteractionManager } from "three.interactive"
 
@@ -85,19 +89,21 @@ export default {
             offset: 24,
             seed: Math.floor(Math.random()*9000+1000).toString(),
             sensitivity: "abstract",
-            sensitivityScales: ["abstract","non-identity","identity","open", "custom"],
+            sensitivityScales: ["abstract","non-identity","identity","open"],
             activeCuboid: null,
+            initialised: false,
             isLoading: true,
             cuboids: [],
             map: [
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,1,0],
-                [0,0,0,0,0,0,0],
-                [0,0,0,1,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
+                [1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1],
             ],
+            allCuboids: [],
             transitionDuration: 4800,
             transitionType: "Bounce.Out",
             // transitionType: "Elastic.Out",
@@ -138,7 +144,16 @@ export default {
     },
     mounted() {
         this.init()
+        three.camera = new THREE.OrthographicCamera( -1, 1, -1, 1, 0, 1000 )
+        three.camera.updateProjectionMatrix()
+        
+        three.scene.add(three.camera)
 
+        three.camera.zoom = .16
+        three.camera.updateProjectionMatrix()
+        three.controls = new OrbitControls( three.camera, three.renderer.domElement )
+
+        
         document.body.onmousedown = (evt)  =>{ 
             this.mouseDown = true
         }
@@ -146,22 +161,15 @@ export default {
             this.mouseDown = false
         }
 
+        this.updateMap(three.scene.initialised)
+
         // Prevent multiple camera's / meshes to be added
         // Everything after this if statement will only be added the first time that this component is mounted
         if (three.scene.initialised) {
             this.mesh = _.find(three.scene.children, {type:"Mesh"})
+            this.isLoading = false
             return
         }
-
-
-        // Set camera in front position
-        // three.camera.position.z = this.cubeDimensions.depth*4
-        // three.camera.position.z = this.cubeDimensions.depth*4
-        // three.camera.position.y = this.cubeDimensions.height/2
-        // three.camera.position.x = this.cubeDimensions.width/2
-        // three.camera.lookAt(this.cubeDimensions.width/2, this.cubeDimensions.height/2, this.cubeDimensions.depth/2)
-        three.scene.add(three.camera)
-
 
 
         three.scene.initialised = true
@@ -201,34 +209,11 @@ export default {
             // Add scene to dom
             this.$el.querySelector(".viewport-content").append(three.renderer.domElement)
 
-            this.createGroundplane()
-            var allCuboids = []
-            for (let x = 0; x < this.map.length; x++) {
-                for (let z = 0; z < this.map[x].length; z++) {
-                    if (this.map[x][z] == 1) {
-                        var cuboid = this.createCuboid(`${x}-${z}`, "abstract")
-                        cuboid.visible = false
-                        cuboid.position.x = x*this.offset
-                        cuboid.position.z = z*this.offset
-                        allCuboids.push(cuboid)
-                    }
-                }
-            }
-            
-            this.isLoading = false
-
-            var centerCuboid = allCuboids[Math.floor((allCuboids.length-1)/2)]
-            three.camera.position.x = centerCuboid.position.x = 32
-            three.camera.position.z = centerCuboid.position.z = 32
-            three.camera.position.y = 64
-            this.moveToCuboid(centerCuboid).then(() => {
-            })
-
             three.controls.minDistance = 8
             three.controls.maxDistance = 32
             
             three.controls.maxPolarAngle = degreesToRadians(180 - 90) 
-            three.controls.minPolarAngle = degreesToRadians(180 - 160) 
+            three.controls.minPolarAngle = degreesToRadians(180 - 180) 
 
             // Helper function for updating scene on screen resizing
             window.addEventListener("resize", () => {this.updateCanvasSize(three.camera, three.renderer)})
@@ -246,16 +231,67 @@ export default {
 
             camera.updateProjectionMatrix()
         },
-        createGroundplane() {
-            const geometry = new THREE.PlaneGeometry( 3200, 3200 ) // update with height/width of image
-            const material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} )
-            const plane = new THREE.Mesh( geometry, material )
-            plane.position.x = 0
-            plane.position.y = -0.25
-            plane.position.z = 0
-            plane.rotation.x = Math.PI / 2
-            plane.name = "groundplane"
-            three.scene.add( plane )
+        updateMap(firstLoad) {
+            this.seed =  Math.floor(Math.random()*9000+1000).toString()
+            let cubeDimensions = {
+                x:5,
+                y:5,
+                z:5,
+            }
+            if (this.sensitivity == "open") {
+                cubeDimensions.x = 7
+                cubeDimensions.y = 7
+                cubeDimensions.z = 7
+            }
+
+            if (!firstLoad) {
+                var total = 0
+                var update = false
+                for (let x = 0; x < this.map.length; x++) {
+                    for (let z = 0; z < this.map[x].length; z++) {
+                        if (this.map[x][z] == 1) {
+                        
+                            if (this.allCuboids[total]) {
+                                this.allCuboids[total].cuboidLines = Cuboid.generateCuboidLines(cubeDimensions, this.sensitivity, this.seed + total)
+                                update = true
+                            } else {
+                                var cuboid = this.createCuboid(`${x}-${z}`, this.sensitivity)
+                                cuboid.position.x = x*this.offset
+                                cuboid.position.z = z*this.offset
+                                cuboid.cuboidLines = Cuboid.generateCuboidLines(cubeDimensions, this.sensitivity, this.seed + total)
+
+                                this.allCuboids.push(cuboid)
+                            }
+                            total++
+                        }
+                    }
+                }
+            
+                this.isLoading = false
+
+                var centerCuboid = this.allCuboids[Math.floor((this.allCuboids.length-1)/2)]
+            } else {
+                // centerCuboid
+                var z = Math.floor(this.map.length/2)
+                var x = Math.floor(this.map[z].length/2)
+                var centerCuboid = Cuboid.get(`cuboid-${x}-${z}`, three.scene)
+            }
+            if (!update) {        
+                three.camera.position.x = centerCuboid.position.x + 32
+                three.camera.position.z = centerCuboid.position.z + 32
+                three.camera.position.y = 64
+            }
+
+            Cuboid.update(centerCuboid, {
+                delay: this.delay, 
+                cuboidLines: centerCuboid.cuboidLines,
+                transition: this.transitionTypes[this.transitionType], 
+                duration: this.transitionDuration
+            })
+
+            this.moveToCuboid(centerCuboid).then(() => {
+                this.initialised = true
+            })
         },
         createCuboid(id, sensitivity) {
             
@@ -270,26 +306,20 @@ export default {
                 cubeDimensions.z = 5
             }
    
-            let newCuboid = Cuboid.create(cubeDimensions, {name: `cuboid-${id}`, maxLines: 200})
+            let newCuboid = Cuboid.create(cubeDimensions, {name: `cuboid-${id}`, maxLines: 320})
             newCuboid.material.color = "#000000"
             newCuboid.material.transparent = true
             newCuboid.material.opacity = 0
+            newCuboid.visible = false
             three.scene.add(newCuboid)
-            this.cuboidLines = Cuboid.generateCuboidLines(cubeDimensions, this.sensitivity, this.seed + id)
-
-            Cuboid.update(newCuboid, {
-                delay: this.delay, 
-                cuboidLines: this.cuboidLines,
-                transition: this.transitionTypes[this.transitionType], 
-                duration: this.transitionDuration
-            })
+            // this.cuboidLines = Cuboid.generateCuboidLines(cubeDimensions, this.sensitivity, this.seed + id)
 
             _.each(newCuboid.children, lineObject => {
                 this.interactionManager.add(lineObject)
                 lineObject.addEventListener("mousedown", (event) => {
                     clearTimeout(this.clickTimeout)
                     event.stopPropagation()
-                    console.log(event.target, event.target.data)
+
                     var cuboid = event.target.parent
                     if (!cuboid.visible) {
                         return
@@ -302,7 +332,6 @@ export default {
                     //     }
                     // }, 160)
                     } else {
-                        console.log("event.target.data.side", event.target)
                         this.moveToSide(event.target.data.side)
                     }
                 })
@@ -318,7 +347,15 @@ export default {
             }
             let cameraPoint = this.activeCuboid.position.clone()
             cameraPoint.y = 2.5
-            console.log("move to side", side)
+
+            let centerPoint = this.activeCuboid.position.clone()
+            if (this.sensitivity == "open") {
+                centerPoint.y = 3.5
+                cameraPoint.y = 3.5
+            } else {   
+                centerPoint.y = 2.5 
+            }
+            
             switch (side) {
             case "front": cameraPoint.z += 16; break
             case "back": cameraPoint.z -= 16; break
@@ -326,9 +363,8 @@ export default {
             case "right": cameraPoint.x += 16; break
             }
             
-            return this.moveToPoint(cameraPoint, this.activeCuboid.position)
+            return this.moveToPoint(cameraPoint, centerPoint)
         },
-
         moveToPoint(cameraPosition, centerPoint) {
             
             return new Promise((resolve, reject) => {
@@ -364,50 +400,46 @@ export default {
             center.y = 2.5
             
             const destination = cuboid.position.clone()
-            destination.y += 16
+            destination.y += 130
 
-            const oldCuboid = this.activeCuboid
+            let oldCuboid = null
+
+            if (this.activeCuboid && cuboid.name != this.activeCuboid.name) {
+                oldCuboid = this.activeCuboid
+            }
 
             this.activeCuboid = cuboid
-            cuboid.visible = true
 
             if (cuboid.position.x < three.camera.position.x) {
-                destination.x += 16
+                destination.x += 128
             } else {
-                destination.x -= 16
+                destination.x -= 128
             }
 
             if (cuboid.position.z < three.camera.position.z) {
-                destination.z += 16
+                destination.z += 128
             } else {
-                destination.z -= 16
+                destination.z -= 128
             }
             
+            cuboid.visible = true
             new TWEEN.Tween( cuboid.material )   
                 .to( {opacity: 1}, 800 )
                 .easing( this.transitionTypes[this.transitionType] )
                 .start()
+
             if (oldCuboid) {
                 new TWEEN.Tween( oldCuboid.material )   
                     .to( {opacity: 0}, this.transitionDuration )
                     .easing( this.transitionTypes[this.transitionType] )
                     .start()
+                    .onComplete(() => {
+                        cuboid.visible = false
+                    })
             }
 
             return this.moveToPoint(destination, center)
         },
-        // updateCuboid(id) {
-        //     const cuboid = Cuboid.get(`cuboid-${id}`, three.scene)
-        //     this.cuboidLines = Cuboid.generateCuboidLines(this.cubeDimensions, this.sensitivity, this.seed)
-        //     Cuboid.update(cuboid, {
-        //         delay: this.delay, 
-        //         cuboidLines: this.cuboidLines,
-        //         transition: this.transitionTypes[this.transitionType], 
-        //         duration: this.transitionDuration
-        //     })
-        //     // three.controls.target.set((this.cubeDimensions.width-1)/2, (this.cubeDimensions.height-1)/2, (this.cubeDimensions.depth-1)/2)
-        //     // three.camera.lookAt(three.controls.target)
-        // },
     }
 }
 </script>
@@ -417,7 +449,7 @@ export default {
 
     @import '../../assets/scss/variables.scss';
 
-    .cuboid-map {
+    .ortographic-cuboid {
         .viewport-content {
             display: flex;
             justify-content: center;

@@ -25,7 +25,7 @@ const view3D  = {
         scene.background = new THREE.Color("#222") // optional
 
         // const camera            = new THREE.OrthographicCamera( -1, 1, -1, 1, 0, 1000 )
-        const camera            = new THREE.PerspectiveCamera( 35, 1, 0.1, 1000 )
+        const camera            = new THREE.PerspectiveCamera( 35, 1, .1, 1280 ) // 128 = far, .1 = near
         camera.position.set( 0, 20, 0)
         camera.lookAt( 0, 0, 0)
 

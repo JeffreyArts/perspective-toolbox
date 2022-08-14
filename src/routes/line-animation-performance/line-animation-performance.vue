@@ -237,6 +237,7 @@ export default {
         },
         createCuboid(update = false) {
             const cube = _.find(three.scene.children, {name: "cube"})
+            cube.material = new THREE.MeshLambertMaterial({color: "#ff0099", wireframe: false})
 
             // Clean cube
             for (let i = cube.children.length - 1; i >= 0; i--) {
@@ -268,6 +269,7 @@ export default {
             for (let index = 0; index < this.maxLines; index++) {
                 line = Line.create(lineData, this.cube)
                 cube.add(line)
+                line.material = cube.material
                 line.rotation.setFromVector3( line.data.rotation )
                 line.position.copy( line.data.position )
                 line.scale.copy( line.data.scale )
