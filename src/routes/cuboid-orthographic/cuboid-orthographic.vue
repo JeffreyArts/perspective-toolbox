@@ -1,6 +1,6 @@
 <template>
 
-    <div class="ortographic-cuboid">
+    <div class="ortographic-cuboid" @mousemove="onMouseMove">
         <header class="title">
             <h1>Orthographic cuboid</h1>
         </header>
@@ -10,6 +10,11 @@
         <section class="viewport">
             <div class="viewport-content" ratio="1x1">
                 <div class="loader" :class="[isLoading ? '' : '__isHidden']" />
+                <div class="camera-pos-overlay">
+                    <span>X: {{Math.round(cameraPositionX * 10)/10}}</span> <br/>
+                    <span>Y: {{Math.round(cameraPosition.y * 10)/10}}</span> <br/>
+                    <span>Z: {{Math.round(cameraPosition.z * 10)/10}}</span>
+                </div>
             </div>
         </section>
 
@@ -51,6 +56,30 @@
                 </div>
 
             </div>
+            <div class="options">
+
+                <div class="option-group" name="Options">
+                    <div class="option">
+
+                        <div v-for="(option, index) in cameraPositions" :key="index" class="camera-postion-row">
+                            <label class="camera-postion-row-item">
+                                X: <input type="number" v-model.number="option.x" @change="updatePosition(index, 'x')" />
+                            </label>
+                            <label class="camera-postion-row-item">
+                                Y: <input type="number" v-model.number="option.y" @change="updatePosition(index, 'y')" />
+                            </label>
+                            <label class="camera-postion-row-item">
+                                Z: <input type="number" v-model.number="option.z" @change="updatePosition(index, 'z')" />
+                            </label>
+                            <button class="button" @click="moveToPoint({x: option.x, y: option.y, z: option.z}, {x:activeCuboid.position.x, y:sensitivity == 'open' ? 3.5 : 2.5, z:activeCuboid.position.z})">Move</button>
+                        </div>
+                        
+                        <label>
+                            <button class="button" @click="addPosition" >Store position</button>
+                        </label>
+                    </div>
+                </div>  
+            </div>
         </aside>
     </div>
 </template>
@@ -80,6 +109,7 @@ export default {
             lineThickness: .25,
             helperCubeVisibility: false,
             delay: 0,
+            
             interactionManager: new InteractionManager(
                 three.renderer,
                 three.camera,
@@ -94,6 +124,9 @@ export default {
             initialised: false,
             isLoading: true,
             cuboids: [],
+            cameraPosition: three.camera.position,
+            cameraPositionX: three.camera.position.x,
+            cameraPositions: [],
             map: [
                 [1,1,1,1,1,1,1],
                 [1,1,1,1,1,1,1],
@@ -219,6 +252,12 @@ export default {
             window.addEventListener("resize", () => {this.updateCanvasSize(three.camera, three.renderer)})
             window.dispatchEvent(new Event("resize"))
         },
+        onMouseMove( event ) {
+            if (this.mouseDown) {
+                this.cameraPosition = three.camera.position
+                this.cameraPositionX = three.camera.position.x
+            }
+        },
         updateCanvasSize(camera, renderer) {
             var width = this.$el.clientWidth
             var height = this.$el.clientWidth
@@ -293,6 +332,13 @@ export default {
                 this.initialised = true
             })
         },
+        addPosition() {
+            this.cameraPositions.push({
+                x: Math.round(three.camera.position.x),
+                y: Math.round(three.camera.position.y),
+                z: Math.round(three.camera.position.z)
+            })
+        },
         createCuboid(id, sensitivity) {
             
             let cubeDimensions = {
@@ -351,7 +397,6 @@ export default {
             let centerPoint = this.activeCuboid.position.clone()
             if (this.sensitivity == "open") {
                 centerPoint.y = 3.5
-                cameraPoint.y = 3.5
             } else {   
                 centerPoint.y = 2.5 
             }
@@ -364,6 +409,13 @@ export default {
             }
             
             return this.moveToPoint(cameraPoint, centerPoint)
+        },
+        updatePosition(index, axis) {
+            var position = this.cameraPositions[index]
+            if (position) {
+                three.camera.position[axis] = position[axis]
+                three.camera.lookAt( this.activeCuboid.position.x, this.sensitivity == "open" ? 3.5 : 2.5, this.activeCuboid.position.z)
+            }
         },
         moveToPoint(cameraPosition, centerPoint) {
             
@@ -472,6 +524,32 @@ export default {
             input {
                 width: 64px;
                 margin-right: 8px;
+            }
+        }
+    }
+
+    .camera-pos-overlay {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        font-size: 12px;
+        font-family: fixedSys;
+    }
+    .camera-postion-row {
+        width: 100%;
+        
+        button {
+            float: right;
+            margin-top: 12px;
+        }
+
+        .camera-postion-row-item {
+            width: 72px;
+            display: inline-block;
+            margin-right: 8px;
+
+            input {
+                max-width: 100%;
             }
         }
     }
