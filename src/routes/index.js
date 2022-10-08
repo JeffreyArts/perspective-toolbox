@@ -15,6 +15,7 @@ import Tube from "./tube/tube.vue"
 import TubesAnimated from "./tubes-animated/tubes-animated.vue"
 import OrbitControls from "./orbit-controls/orbit-controls.vue"
 import WireframeCube from "./wireframe-cube/wireframe-cube.vue"
+import GlitchEffect from "./glitch-effect/glitch-effect.vue"
 import StoryCloud from "./story-cloud/story-cloud.vue"
 
 const routes = [
@@ -62,6 +63,11 @@ const routes = [
         path: "/draw-line-from-coordinates",
         name: "Draw line from coordinates",
         component: DrawLineFromCoordinates,
+    },
+    {
+        path: "/glitch-effect",
+        name: "Glitch effect",
+        component: GlitchEffect,
     },
     {
         path: "/line-animation-performance",
