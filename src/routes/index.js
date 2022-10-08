@@ -15,6 +15,7 @@ import Tube from "./tube/tube.vue"
 import TubesAnimated from "./tubes-animated/tubes-animated.vue"
 import OrbitControls from "./orbit-controls/orbit-controls.vue"
 import WireframeCube from "./wireframe-cube/wireframe-cube.vue"
+import StoryCloud from "./story-cloud/story-cloud.vue"
 
 const routes = [
     {
@@ -71,6 +72,11 @@ const routes = [
         path: "/orbit-controls",
         name: "Orbit controls",
         component: OrbitControls,
+    },
+    {
+        path: "/story-cloud",
+        name: "Story cloud",
+        component: StoryCloud,
     },
     {
         path: "/text-to-threejs",
