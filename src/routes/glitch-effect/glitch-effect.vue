@@ -8,7 +8,14 @@
         <hr>
         <section class="viewport">
             <div class="glitch-effect-container" ratio="1x1">
-                <glitch :texts="texts">{{texts[0]}}</glitch>
+                A <glitch :inputs="texts" 
+                        @glitchChange="glitchUpdate" 
+                        :duration="duration" 
+                        :delay="delay" 
+                        :opacity-jumps="opacityJumps" 
+                        :position-jumps="positionJumps" 
+                        :glitch-jumps="glitchJumps" 
+                        :class="[`__is-${color.toLowerCase()}`]">{{texts[0]}}</glitch> three
             </div> 
         </section>
 
@@ -26,6 +33,28 @@
                         <input type="text" v-model="texts[2]" placeholder="String3">
                     </div>
                 </div>
+                <div class="option-group" name="Options">
+                    <div class="option">
+                        <label for="duration">Duration</label>
+                        <input type="number" id="duration" v-model="duration" >
+                    </div>
+                    <div class="option">
+                        <label for="duration">Delay</label>
+                        <input type="number" id="duration" v-model="delay" >
+                    </div>
+                    <div class="option">
+                        <label for="opacityJumps">Opacity jumps</label>
+                        <input id="opacityJumps" type="number" v-model="opacityJumps" min="0">
+                    </div>
+                    <div class="option">
+                        <label for="glitchJumps">Glitch jumps</label>
+                        <input id="glitchJumps" type="number" v-model="glitchJumps" min="0">
+                    </div>
+                    <div class="option">
+                        <label for="positionJumps">Position jumps</label>
+                        <input id="positionJumps" type="number" v-model="positionJumps" min="0">
+                    </div>
+                </div>
             </div>
         </aside>
     </div>
@@ -33,9 +62,6 @@
 
 
 <script>
-// import * as THREE from "three"
-// import _ from "lodash"
-// import Glitch from "@/components/glitch.vue"
 import Glitch from "./../../components/glitch.vue"
 
 export default {
@@ -45,13 +71,22 @@ export default {
     props: [],
     data() {
         return {
-            texts: ["Hello World", "Hallo wereld", "lorum ipsum dolor sit amet"],
+            texts: [ "<img src='https://picsum.photos/200/300' />", "red", "blue", "green"],
+            duration: 1024,
+            delay: 3800,
+            color: "black",
+            opacityJumps: 6,
+            glitchJumps: 6,
+            positionJumps: 6,
         }
     },
     mounted() {
-        // this.init()
+      
     },
     methods: {
+        glitchUpdate(glitch){
+            this.color = glitch
+        }
        
     }
 }
@@ -69,7 +104,41 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
+    font-size: 64px;
     font-weight: bold;
+    .glitch {
+        margin-left: 0.32em;
+        margin-right: 0.32em;
+    }
+}
+.__is-red {
+    > * {
+        &:nth-child(2) {
+            color: red;
+        }
+        &:nth-child(3) {
+            color: tomato;
+        }
+    }
+}
+.__is-blue {
+    > * {
+        &:nth-child(2) {
+            color: blue;
+        }
+        &:nth-child(3) {
+            color: aqua;
+        }
+    }
+}
+.__is-green {
+    > * {
+        &:nth-child(2) {
+            color: green;
+        }
+        &:nth-child(3) {
+            color: lime;
+        }
+    }
 }
 </style>

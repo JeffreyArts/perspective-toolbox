@@ -5,9 +5,9 @@
  -->
 <template>
     <span class="glitch">
-        <span ref="glitchLayer0">{{glitchedText}}</span>
-        <span ref="glitchLayer1">{{glitchedText}}</span>
-        <span ref="glitchLayer2">{{glitchedText}}</span>
+        <span ref="glitchLayer0" v-html="glitchedInput" />
+        <span ref="glitchLayer1" v-html="glitchedInput" />
+        <span ref="glitchLayer2" v-html="glitchedInput" />
     </span>
 </template>
 
@@ -17,87 +17,62 @@ import _ from "lodash"
 export default {
     name: "glitch-component",
     props: {
-        texts: {
+        inputs: {
             type: Array,
             required: false
         },
-        // duration: {
-        //     type: Number,
-        //     required: false,
-        //     default: 0.1
-        // },
-        // delay: {
-        //     type: Number,
-        //     required: false,
-        //     default: 0.1
-        // },
-        // repeat: {
-        //     type: Number,
-        //     required: false,
-        //     default: 0.1
-        // },
-        // repeatDelay: {
-        //     type: Number,
-        //     required: false,
-        //     default: 0.1
-        // },
-        // yoyo: {
-        //     type: Boolean,
-        //     required: false,
-        //     default: false
-        // },
-        // ease: {
-        //     type: String,
-        //     required: false,
-        //     default: "linear"
-        // },
-        // text: {
-        //     type: String,
-        //     required: false,
-        //     default: ""
-        // }
+        duration: {
+            type: Number,
+            required: false,
+            default: 800
+        },
+        delay: {
+            type: Number,
+            required: false,
+            default: 4800
+        },
+        positionJumps: {
+            type: Number,
+            required: false,
+            default: 6
+        },
+        glitchJumps: {
+            type: Number,
+            required: false,
+            default: 6
+        },
+        opacityJumps: {
+            type: Number,
+            required: false,
+            default: 6
+        }
     },
     data() {
         return {
-            glitchedText: "",
+            glitchedInput: "",
             clipPaths: [["polygon(0% 100%,100% 100%)"],["polygon(0% 100%,100% 100%)"],["polygon(0% 100%,100% 100%)"]],
             clipIndex: 0,
             textIndex: 0,
+            startTime: 0,
         }
     },
     watch:{
     },
     mounted() {
 
-        // target.style.setProperty("--path", `polygon(${points.join(",")})`)
-        this.clipPaths[0].push(this.generateGlitchMasksSVG())
-        this.clipPaths[0].push(this.generateGlitchMasksSVG())
-        this.clipPaths[0].push(this.generateGlitchMasksSVG())
-
-        this.clipPaths[1].push(this.generateGlitchMasksSVG())
-        this.clipPaths[1].push(this.generateGlitchMasksSVG())
-        this.clipPaths[1].push(this.generateGlitchMasksSVG())
-
-        this.clipPaths[2].push(this.generateGlitchMasksSVG())
-        this.clipPaths[2].push(this.generateGlitchMasksSVG())
-        this.clipPaths[2].push(this.generateGlitchMasksSVG())
-
-        // console.log(this.$slots.default()[0])
-        if (!this.texts) {
-            this.glitchedText = this.$slots.default()[0].text
+        if (!this.inputs) {
+            this.glitchedInput = this.$slots.default()[0].text
         } else {
-            this.glitchedText = this.texts[0]
+            this.glitchedInput = this.inputs[0]
         }
 
-        this.animateLayer(0)
-        this.animateLayer(1)
-        this.animateLayer(2)
+        this.glitchLayers()
     },
     unmounted() {
         
     },
     methods: {
-        generateGlitchMasksSVG() {
+        generateGlitchMasksPath() {
             const number = Math.floor(Math.random() * 60)
             const points = []
             let x = 0
@@ -115,34 +90,110 @@ export default {
             }
             return `polygon(${points.join(",")})`
         },
-        animateLayer(layerIndex) {
-            // layerIndex+=1
-            setInterval(() => {
-                if (!this.$refs[`glitchLayer${layerIndex}`]) {
+        animateClipPath(domElement, index = 0) {
+            const clipPath = this.generateGlitchMasksPath()
+            domElement.style.setProperty("--path", clipPath)
+            var delay =  index % 2 === 0 ? Math.ceil(Math.random() * (this.duration / glitchJumps)) + (this.duration / glitchJumps / 4) : (this.duration / glitchJumps / 4)
+            setTimeout(() => {
+                if (this.startTime + this.duration > Date.now()) {
+                    this.animateClipPath(domElement, index + 1)
+                } else {
+                    domElement.style.setProperty("--path", "")
                     return
                 }
+            }, delay)
+        },
+        animatePosition(domElement, index = 0) {
+            const position = {
+                left: Math.floor(Math.random() * 32) - 16,
+                top: Math.floor(Math.random() * 32) - 16,
+            }
 
-                this.clipIndex = (this.clipIndex + 1) % this.clipPaths[layerIndex].length
-                this.$refs[`glitchLayer${layerIndex}`].style.setProperty("--path", this.clipPaths[layerIndex][this.clipIndex])
-                if (this.clipIndex == 0 && this.texts.length > 0) {
-                    this.textIndex = (this.textIndex + 1) % this.texts.length
-                
-                    this.glitchedText = this.texts[this.textIndex]
+            position.left = position.left < 0 ? position.left - 16 : position.left + 16
+            position.top = position.top < 0 ? position.top - 16 : position.top + 16
+            var delay = Math.ceil(Math.random() * (this.duration / this.positionJumps) + (this.duration / this.positionJumps / 4))
+
+            domElement.style.setProperty("translate", `${position.left}% ${position.top}%`)
+            setTimeout(() => {
+                if (this.startTime + this.duration > Date.now() + delay) {
+                    this.animatePosition(domElement, index + 1)
+                } else {
+                    domElement.style.setProperty("translate", "0 0")
+                    return
                 }
+            }, delay) 
+        },
+        animateOpacity(domElement, opts, index = 0) {
+            // const minDelay = opts.minDelay || 512
+            const offDelay = opts.offDelay || 512
+            const onDelay = opts.onDelay || 128
             
-            }, 480)
-        }
+            let opacity =  index % 2 === 0 ? 1 : 0
+            if (opts.inverted === true) {
+                opacity = index % 2 === 0 ? 0 : 1
+            }
+
+            domElement.style.setProperty("opacity", opacity)
+            var delay =  index % 2 === 0 ? Math.ceil(Math.random() * offDelay) + offDelay : Math.ceil(Math.random() * onDelay) + onDelay
+            
+            setTimeout(() => {
+                if (this.startTime + this.duration > Date.now() + delay) {
+                    this.animateOpacity(domElement, opts, index + 1)
+                } else {
+                    domElement.style.setProperty("opacity", 1)
+                    return
+                }
+            }, delay)            
+        },
+        glitchLayer(layerIndex) {
+            // Set timestamp for this.startTime
+            this.startTime = Date.now()
+            
+
+            var inverted = layerIndex === 0 ? false : true
+            var minDelay = layerIndex === 0 ? this.duration / this.opacityJumps / 4 : this.duration / this.opacityJumps
+            const targetLayer = this.$refs[`glitchLayer${layerIndex}`]
+            
+            this.animatePosition(targetLayer)
+            this.animateClipPath(targetLayer)
+            this.animateOpacity(targetLayer, {
+                minDelay: minDelay,
+                onDelay: minDelay,
+                offDelay: minDelay * 2,
+                inverted: inverted
+            })
+        },
+        glitchLayers() {
+            this.glitchLayer(0)
+            this.glitchLayer(1)
+            this.glitchLayer(2)
+            
+            setTimeout(() => {
+    
+                this.textIndex = (this.textIndex + 1) % this.inputs.length
+                this.glitchedInput = this.inputs[this.textIndex]
+                this.$emit("glitchChange", this.glitchedInput)
+
+                setTimeout(() => {
+                    this.glitchLayers()
+                }, this.delay)
+                
+
+            }, this.duration*.8)
+        },
     }
 }
 
 </script>
 
 <style lang="scss">
+@import "./../assets/scss/variables.scss";
 .glitch {
     position: relative;
     z-index: 1;
     > * {
-        animation: glitch 2.4s linear infinite alternate;
+        display: inline-block;  
+        clip-path: var(--path);
         
         &:nth-child(1) {
             position: relative;
@@ -159,45 +210,12 @@ export default {
         }
         
         &:nth-child(2) {
-            translate: -10% 4%;
-            text-shadow: 0 0 1px rgb(255, 139, 224);
-            color: transparent;
+            color: $accentColor;
         }
         &:nth-child(3) {
-            translate: 2% 16%;
-            color: rgb(77, 131, 248);
-            animation-delay: .32s;
+            color: #ddd;
         }
     }
-
 }
-// .glitch-path {
-//     clip-path: var(--path);
-//     background-color: #f09;
-//     position: absolute;
-//     left: 0;
-//     right: 0;
-//     bottom:0;
-//     top:0;
-// }
 
-
-@keyframes glitch {
-  0%,
-  5%,
-  45%,
-  76%,
-  90% {
-    clip-path: var(--path)
-  }
-
-  1%,
-  7%,
-  33%,
-  47%,
-  78%,
-  93% {
-    clip-path: none;
-  } 
-}
 </style>
