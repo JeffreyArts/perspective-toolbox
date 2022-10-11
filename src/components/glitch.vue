@@ -4,7 +4,7 @@
     https://codepen.io/mattgrosswork/pen/bGgWGxy
  -->
 <template>
-    <span class="glitch">
+    <span class="glitch" @mouseenter="mouseOverGlitch" @mouseleave="cancelGlitch">
         <span ref="glitchLayer0" v-html="glitchedInput" />
         <span ref="glitchLayer1" v-html="glitchedInput" />
         <span ref="glitchLayer2" v-html="glitchedInput" />
@@ -21,6 +21,11 @@ export default {
             type: Array,
             required: false
         },
+        hover: {
+            type: Boolean,
+            required: false,
+            default: true
+        },
         duration: {
             type: Number,
             required: false,
@@ -29,7 +34,8 @@ export default {
         delay: {
             type: Number,
             required: false,
-            default: 4800
+            default: 4800,
+            min: 64
         },
         positionJumps: {
             type: Number,
@@ -41,10 +47,19 @@ export default {
             required: false,
             default: 6
         },
-        opacityJumps: {
+        glitchOffset: {
             type: Number,
             required: false,
-            default: 6
+            default: 16
+        },
+        repeat: {
+            required: false,
+            default: false
+        },
+        opacityDuration: {
+            type: Number,
+            required: false,
+            default: 128
         }
     },
     data() {
@@ -54,22 +69,40 @@ export default {
             clipIndex: 0,
             textIndex: 0,
             startTime: 0,
+            repeatIndex:0,
+            timeouts: []
         }
     },
-    watch:{
+    watch: {
+        repeat: {
+            handler: function (val) {
+                if (val) {
+                    this.cancelGlitch()
+                    this.glitchLayers()
+                }
+            },
+            immediate: true
+        },
+        $slots: {
+            handler: function (val) {
+                this.glitchedInput = val.default()[0].children
+                this.cancelGlitch()
+                this.glitchLayers()
+            },
+            immediate: true
+        },
     },
     mounted() {
-
         if (!this.inputs) {
-            this.glitchedInput = this.$slots.default()[0].text
+            this.glitchedInput = this.$slots.default()[0].children
         } else {
             this.glitchedInput = this.inputs[0]
         }
-
+        this.cancelGlitch()
         this.glitchLayers()
     },
-    unmounted() {
-        
+    beforeUnmount() {
+        this.cancelGlitch()
     },
     methods: {
         generateGlitchMasksPath() {
@@ -92,9 +125,12 @@ export default {
         },
         animateClipPath(domElement, index = 0) {
             const clipPath = this.generateGlitchMasksPath()
+            const delay = Math.ceil(this.duration / this.glitchJumps + Math.random() * (this.duration / this.glitchJumps / 4))
             domElement.style.setProperty("--path", clipPath)
-            var delay =  index % 2 === 0 ? Math.ceil(Math.random() * (this.duration / glitchJumps)) + (this.duration / glitchJumps / 4) : (this.duration / glitchJumps / 4)
-            setTimeout(() => {
+
+
+            var timeout = setTimeout(() => {
+                this.timeouts = this.timeouts.filter(index => index !== timeout)
                 if (this.startTime + this.duration > Date.now()) {
                     this.animateClipPath(domElement, index + 1)
                 } else {
@@ -102,19 +138,22 @@ export default {
                     return
                 }
             }, delay)
+            this.timeouts.push(timeout)
         },
         animatePosition(domElement, index = 0) {
             const position = {
-                left: Math.floor(Math.random() * 32) - 16,
-                top: Math.floor(Math.random() * 32) - 16,
+                left: Math.floor(Math.random() * this.glitchOffset) - this.glitchOffset/2,
+                top: Math.floor(Math.random() * this.glitchOffset) - this.glitchOffset/2,
             }
 
-            position.left = position.left < 0 ? position.left - 16 : position.left + 16
-            position.top = position.top < 0 ? position.top - 16 : position.top + 16
-            var delay = Math.ceil(Math.random() * (this.duration / this.positionJumps) + (this.duration / this.positionJumps / 4))
+            position.left = position.left < 0 ? position.left - this.glitchOffset/2 : position.left + this.glitchOffset/2
+            position.top = position.top < 0 ? position.top - this.glitchOffset/2 : position.top + this.glitchOffset/2
+            const delay = Math.ceil(this.duration / this.positionJumps + Math.random() * (this.duration / this.positionJumps / 4))
 
             domElement.style.setProperty("translate", `${position.left}% ${position.top}%`)
-            setTimeout(() => {
+
+            var timeout = setTimeout(() => {
+                this.timeouts = this.timeouts.filter(index => index !== timeout)
                 if (this.startTime + this.duration > Date.now() + delay) {
                     this.animatePosition(domElement, index + 1)
                 } else {
@@ -122,45 +161,47 @@ export default {
                     return
                 }
             }, delay) 
+            this.timeouts.push(timeout)
         },
-        animateOpacity(domElement, opts, index = 0) {
-            // const minDelay = opts.minDelay || 512
-            const offDelay = opts.offDelay || 512
-            const onDelay = opts.onDelay || 128
+        animateOpacity(domElement, inverted = false, index = 0) {
             
             let opacity =  index % 2 === 0 ? 1 : 0
-            if (opts.inverted === true) {
+            if (inverted === true) {
                 opacity = index % 2 === 0 ? 0 : 1
             }
 
             domElement.style.setProperty("opacity", opacity)
-            var delay =  index % 2 === 0 ? Math.ceil(Math.random() * offDelay) + offDelay : Math.ceil(Math.random() * onDelay) + onDelay
-            
-            setTimeout(() => {
+            let delay = Math.ceil(this.opacityDuration/2 + Math.random() * this.opacityDuration)
+            if (inverted) {
+                delay = Math.ceil(this.opacityDuration/4 + Math.random() * this.opacityDuration/2)
+            }
+
+            var timeout = setTimeout(() => {
+                this.timeouts = this.timeouts.filter(index => index !== timeout)
                 if (this.startTime + this.duration > Date.now() + delay) {
-                    this.animateOpacity(domElement, opts, index + 1)
+                    this.animateOpacity(domElement, inverted, index + 1)
                 } else {
                     domElement.style.setProperty("opacity", 1)
                     return
                 }
             }, delay)            
+            this.timeouts.push(timeout)
         },
         glitchLayer(layerIndex) {
             // Set timestamp for this.startTime
             this.startTime = Date.now()
             
 
-            var inverted = layerIndex === 0 ? false : true
-            var minDelay = layerIndex === 0 ? this.duration / this.opacityJumps / 4 : this.duration / this.opacityJumps
+            // var minDelay = layerIndex === 0 ? this.duration / this.opacityJumps / 4 : this.duration / this.opacityJumps
             const targetLayer = this.$refs[`glitchLayer${layerIndex}`]
+            if (!targetLayer) {
+                return
+            }
             
             this.animatePosition(targetLayer)
             this.animateClipPath(targetLayer)
             this.animateOpacity(targetLayer, {
-                minDelay: minDelay,
-                onDelay: minDelay,
-                offDelay: minDelay * 2,
-                inverted: inverted
+                inverted: layerIndex === 0 ? false : true
             })
         },
         glitchLayers() {
@@ -168,19 +209,56 @@ export default {
             this.glitchLayer(1)
             this.glitchLayer(2)
             
-            setTimeout(() => {
-    
-                this.textIndex = (this.textIndex + 1) % this.inputs.length
-                this.glitchedInput = this.inputs[this.textIndex]
-                this.$emit("glitchChange", this.glitchedInput)
+            var timeout1 = setTimeout(() => {
+                this.repeatIndex++
+                if (this.inputs) {
+                    this.textIndex = (this.textIndex + 1) % this.inputs.length
+                    this.glitchedInput = this.inputs[this.textIndex]
+                    this.$emit("glitchChange", this.glitchedInput)
 
-                setTimeout(() => {
+                    if ((!this.repeat && this.textIndex === this.inputs.length - 1 ) ||
+                        (this.repeatIndex > this.repeat *(this.inputs.length - 1)  && this.textIndex === this.inputs.length - 1 )) {
+                        return
+                    }
+                } else {
+                    if (!this.repeat || this.repeatIndex > this.repeat) {
+                        return
+                    }
+                }
+                        
+                var timeout2 = setTimeout(() => {
                     this.glitchLayers()
+                    this.timeouts = this.timeouts.filter(timeout => timeout !== timeout2)
                 }, this.delay)
-                
-
+                this.timeouts.push(timeout2)
+                this.timeouts = this.timeouts.filter(timeout => timeout !== timeout1)
             }, this.duration*.8)
+
+            this.timeouts.push(timeout1)
         },
+        cancelGlitch() {
+            this.timeouts.forEach(timeout => {
+                clearTimeout(timeout)
+            })
+            this.repeatIndex = 0
+            this.timeouts = []
+        },
+        mouseOverGlitch() {
+            console.log("Mouse over",this.hover)
+            if (this.hover) {
+                this.glitchLayers()
+            } 
+        },
+        mouseLeaveGlitch() {
+            setTimeout(() => {
+                if (this.hover) {
+                    this.cancelGlitch()
+                    this.glitchLayer(0)
+                    this.glitchLayer(1)
+                    this.glitchLayer(2)
+                }
+            }, 100)
+        }
     }
 }
 

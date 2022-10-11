@@ -8,14 +8,16 @@
         <hr>
         <section class="viewport">
             <div class="glitch-effect-container" ratio="1x1">
-                A <glitch :inputs="texts" 
+                A <glitch 
                         @glitchChange="glitchUpdate" 
                         :duration="duration" 
                         :delay="delay" 
-                        :opacity-jumps="opacityJumps" 
+                        :repeat="3" 
+                        :opacity-duration="opacityDuration" 
                         :position-jumps="positionJumps" 
                         :glitch-jumps="glitchJumps" 
-                        :class="[`__is-${color.toLowerCase()}`]">{{texts[0]}}</glitch> three
+                        :glitch-offset="glitchOffset"
+                        :class="[`__is-${color.toLowerCase()}`]">{{texts[0]}}</glitch> tree
             </div> 
         </section>
 
@@ -43,16 +45,24 @@
                         <input type="number" id="duration" v-model="delay" >
                     </div>
                     <div class="option">
-                        <label for="opacityJumps">Opacity jumps</label>
-                        <input id="opacityJumps" type="number" v-model="opacityJumps" min="0">
+                        <label for="opacityDuration">Opacity duration</label>
+                        <input id="opacityDuration" type="number" v-model="opacityDuration" min="32">
                     </div>
                     <div class="option">
                         <label for="glitchJumps">Glitch jumps</label>
                         <input id="glitchJumps" type="number" v-model="glitchJumps" min="0">
                     </div>
                     <div class="option">
+                        <label for="glitchOffset">Glitch offset</label>
+                        <input id="glitchOffset" type="number" v-model="glitchOffset" min="0">
+                    </div>
+                    <div class="option">
                         <label for="positionJumps">Position jumps</label>
                         <input id="positionJumps" type="number" v-model="positionJumps" min="0">
+                    </div>
+                    <div class="option">
+                        <input id="repeat" type="checkbox" v-model="repeat" value="true">
+                        <label for="repeat">Repeat</label>
                     </div>
                 </div>
             </div>
@@ -72,12 +82,14 @@ export default {
     data() {
         return {
             texts: [ "<img src='https://picsum.photos/200/300' />", "red", "blue", "green"],
-            duration: 1024,
-            delay: 3800,
+            duration: 104,
+            delay: 380,
             color: "black",
-            opacityJumps: 6,
+            opacityDuration: 128,
             glitchJumps: 6,
+            glitchOffset: 16,
             positionJumps: 6,
+            repeat: false,
         }
     },
     mounted() {
