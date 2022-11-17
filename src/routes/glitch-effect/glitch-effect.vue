@@ -12,12 +12,13 @@
                         @glitchChange="glitchUpdate" 
                         :duration="duration" 
                         :delay="delay" 
-                        :repeat="3" 
+                        :inputs="texts"
+                        :repeat="repeat" 
                         :opacity-duration="opacityDuration" 
                         :position-jumps="positionJumps" 
                         :glitch-jumps="glitchJumps" 
                         :glitch-offset="glitchOffset"
-                        :class="[`__is-${color.toLowerCase()}`]">{{texts[0]}}</glitch> tree
+                        :class="[`__is-${color.toLowerCase()}`]"></glitch> tree
             </div> 
         </section>
 
@@ -61,8 +62,8 @@
                         <input id="positionJumps" type="number" v-model="positionJumps" min="0">
                     </div>
                     <div class="option">
-                        <input id="repeat" type="checkbox" v-model="repeat" value="true">
-                        <label for="repeat">Repeat</label>
+                        <label for="positionJumps">Repeat</label>
+                        <input id="positionJumps" type="number" v-model="repeat" min="0">
                     </div>
                 </div>
             </div>
@@ -81,7 +82,7 @@ export default {
     props: [],
     data() {
         return {
-            texts: [ "<img src='https://picsum.photos/200/300' />", "red", "blue", "green"],
+            texts: [ "red", "blue", "green"],
             duration: 104,
             delay: 380,
             color: "black",
@@ -89,7 +90,7 @@ export default {
             glitchJumps: 6,
             glitchOffset: 16,
             positionJumps: 6,
-            repeat: false,
+            repeat: 0,
         }
     },
     mounted() {

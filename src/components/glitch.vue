@@ -4,7 +4,7 @@
     https://codepen.io/mattgrosswork/pen/bGgWGxy
  -->
 <template>
-    <span class="glitch" @mouseenter="mouseOverGlitch" @mouseleave="cancelGlitch">
+    <span class="glitch" @mouseenter="mouseOverGlitch" @mouseleave="mouseLeaveGlitch">
         <span ref="glitchLayer0" v-html="glitchedInput" />
         <span ref="glitchLayer1" v-html="glitchedInput" />
         <span ref="glitchLayer2" v-html="glitchedInput" />
@@ -24,7 +24,7 @@ export default {
         hover: {
             type: Boolean,
             required: false,
-            default: true
+            default: false
         },
         duration: {
             type: Number,
@@ -85,6 +85,9 @@ export default {
         },
         $slots: {
             handler: function (val) {
+                if (!val.default) {
+                    return
+                }
                 this.glitchedInput = val.default()[0].children
                 this.cancelGlitch()
                 this.glitchLayers()
@@ -244,20 +247,14 @@ export default {
             this.timeouts = []
         },
         mouseOverGlitch() {
-            console.log("Mouse over",this.hover)
             if (this.hover) {
                 this.glitchLayers()
             } 
         },
         mouseLeaveGlitch() {
-            setTimeout(() => {
-                if (this.hover) {
-                    this.cancelGlitch()
-                    this.glitchLayer(0)
-                    this.glitchLayer(1)
-                    this.glitchLayer(2)
-                }
-            }, 100)
+            if (this.hover) {
+                this.cancelGlitch()
+            }
         }
     }
 }
