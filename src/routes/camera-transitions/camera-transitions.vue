@@ -24,7 +24,7 @@
                     
                     <div class="option">
                         <label for="transitionType">
-                            Transition type
+                            Transition type 
                             <select name="transitionType" v-model="transitionType" >
                                 <option v-for="(tween, index) in transitionTypes" :value="index" :key="tween">{{index}}</option>
                             </select>

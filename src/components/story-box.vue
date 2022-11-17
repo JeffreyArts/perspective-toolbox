@@ -2,7 +2,7 @@
     <div class="story-box">
         <div v-for="(p,i) in paragraphs" :key="i" v-html="p" 
              class="story-box-paragraph" 
-             :class="i < index ? '__isVisible' : ''"
+             :class="i <= index ? '__isVisible' : ''"
         />
     </div>
 </template>
@@ -10,6 +10,7 @@
 <script>
 
 import _ from "lodash"
+
 export default {
     props: {
         chapter: {
@@ -23,7 +24,6 @@ export default {
     },
     data() {
         return {
-            paragraph: 0,
             paragraphs: []
         }
     },
@@ -94,8 +94,8 @@ export default {
     justify-content: flex-end;
 }
 .story-box-paragraph {
-    // display: none;
-    display: inline-block;
+    display: none;
+    // display: inline-block;
     &.__isVisible {
         display: inline-block;
     }

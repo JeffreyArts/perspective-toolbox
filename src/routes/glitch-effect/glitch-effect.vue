@@ -94,7 +94,7 @@ export default {
         }
     },
     mounted() {
-      
+        window.dispatchEvent(new Event("resize"))
     },
     methods: {
         glitchUpdate(glitch){
