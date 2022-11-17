@@ -250,7 +250,8 @@ export default {
                 Cuboid.remove(oldCuboid)
             }
 
-            const newCuboid = Cuboid.create(this.cubeDimensions, {name: "cuboid", maxLines: 1024})
+            const newCuboid = Cuboid.create(this.cubeDimensions, {name: "cuboid", maxLines: 1024, color: 0xff0066})
+            
             three.scene.add(newCuboid)
 
             this.cuboidLines = Cuboid.generateCuboidLines(this.cubeDimensions, this.sensitivity, this.seed)

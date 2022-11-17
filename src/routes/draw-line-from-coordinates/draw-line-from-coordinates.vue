@@ -47,7 +47,7 @@
                     </div>
                     <hr />
                     <label for="line2">
-                        <h1>Line 2 <small>purple</small></h1>
+                        <h1>Line 2 <small>orange</small></h1>
                     </label>
                     <div class="option">
                         <label for="line2">
@@ -192,17 +192,19 @@ export default {
         const cube = new THREE.Group()
         cube.name = "cube"
         three.scene.add(cube)
-
+        
         const line1 = Line.create(this.line1, this.cube)
         line1.rotation.setFromVector3( line1.data.rotation )
         line1.position.copy( line1.data.position )
+        line1.material = new THREE.MeshBasicMaterial({color: 0xff0066})
         line1.scale.copy( line1.data.scale )
-
+        
         const line2 = Line.create(this.line2, this.cube)
         
         line2.rotation.setFromVector3( line2.data.rotation )
         line2.position.copy( line2.data.position )
         line2.scale.copy( line2.data.scale )
+        line2.material = new THREE.MeshBasicMaterial({color: 0xff6666})
 
         cube.add(line1)
         cube.add(line2)
